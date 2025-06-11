@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School Management System - Home</title>
+</head>
+<body>
+    <h1>Welcome {{ request.user.username }}</h1>
+
+    <p>Select a module:</p>
+
+    <ul>
+        <li><a href="{% url 'admission_home' %}">📘 Admission</a></li>
+        <li><a href="#">💸 Fees (Coming Soon)</a></li>
+        <li><a href="#">📊 Transactions (Coming Soon)</a></li>
+        <li><a href="#">🗃️ Reports (Coming Soon)</a></li>
+    </ul>
+
+    <p><a href="/logout/">Logout</a></p>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<h2>Add Academic Year</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Year</button>
+</form>
+<a href="{% url 'admission_home' %}">← Back</a>

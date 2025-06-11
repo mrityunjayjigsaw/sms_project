@@ -7,4 +7,6 @@ from .models import UserProfile, School
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         # You can assign a default school if needed, or leave it blank
-        UserProfile.objects.create(user=instance, school=School.objects.first())
+        school = School.objects.first()
+        if school:
+            UserProfile.objects.create(user=instance, school=School.objects.first())

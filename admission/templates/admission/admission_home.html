@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admission Module</title>
+</head>
+<body>
+    <h2>🎓 Admission Module</h2>
+
+    <p>Welcome {{ request.user.username }}!</p>
+
+    <ul>
+        <li><a href="{% url 'admit_student' %}">📝 Admit New Student</a></li>
+        <li><a href="{% url 'student_list' %}">📋 View Student List</a></li>
+        <li><a href="{% url 'add_class' %}">➕ Add Class</a></li>
+        <li><a href="{% url 'add_academic_year' %}">📅 Add Academic Year</a></li>
+        <!-- Future features -->
+        <!-- <li><a href="#">📚 Promote Students</a></li> -->
+    </ul>
+
+    <p><a href="{% url 'home' %}">← Back to Home</a></p>
+</body>
+</html>

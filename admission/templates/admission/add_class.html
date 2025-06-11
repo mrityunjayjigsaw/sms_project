@@ -1,0 +1,7 @@
+<h2>Add Class</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Class</button>
+</form>
+<a href="{% url 'admission_home' %}">← Back</a>

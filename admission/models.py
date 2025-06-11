@@ -1,10 +1,18 @@
 from django.db import models
 from core.models import School
+from django.utils import timezone
 
 GENDER_CHOICES = [
     ('M', 'Male'),
     ('F', 'Female'),
     ('O', 'Other'),
+]
+
+CATEGORY_CHOICES = [
+    ('GEN', 'General'),
+    ('OBC', 'OBC'),
+    ('SC', 'SC'),
+    ('ST', 'ST'),
 ]
 
 class AcademicYear(models.Model):
@@ -32,14 +40,25 @@ class StudentAdmission(models.Model):
     admission_no = models.CharField(max_length=20, unique=True)
     ssr_no = models.CharField(max_length=20, blank=True, null=True)
     full_name = models.CharField(max_length=255)
+
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     date_of_birth = models.DateField()
+    admission_date = models.DateField(default=timezone.now)
+
+    father_name = models.CharField(max_length=255, blank=True, default='')
+    mother_name = models.CharField(max_length=255, blank=True, default='')
+    father_profession = models.CharField(max_length=255, blank=True, default='')
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='GEN')
+    religion = models.CharField(max_length=50, blank=True, default='Hindu')
+    aadhar_no = models.CharField(max_length=20, blank=True)
+    apaar_id = models.CharField(max_length=20, blank=True)
+    mobile_no = models.CharField(max_length=15, blank=True, null=True)
+    whatsapp_no = models.CharField(max_length=15, blank=True, null=True)
+
     photo = models.ImageField(upload_to='student_photos/', blank=True, null=True)
-    parent_name = models.CharField(max_length=255, blank=True)
-    address = models.TextField(blank=True)
-    contact_number = models.CharField(max_length=20)
+    address = models.TextField(blank=True, default='')
     email = models.EmailField(blank=True, null=True)
-    admission_date = models.DateField(auto_now_add=True)
+    
     is_active = models.BooleanField(default=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE)
 
