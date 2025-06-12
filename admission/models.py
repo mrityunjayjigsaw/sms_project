@@ -15,6 +15,14 @@ CATEGORY_CHOICES = [
     ('ST', 'ST'),
 ]
 
+RELIGION_CHOICES = [
+    ('Hindu', 'Hindu'),
+    ('Muslim', 'Muslim'),
+    ('Christian', 'Christian'),
+    ('Sikh', 'Sikh'),
+    ('Other', 'Other'),
+]
+
 class AcademicYear(models.Model):
     name = models.CharField(max_length=10)  # e.g., "2024-25"
     start_date = models.DateField()
@@ -45,18 +53,18 @@ class StudentAdmission(models.Model):
     date_of_birth = models.DateField()
     admission_date = models.DateField(default=timezone.now)
 
-    father_name = models.CharField(max_length=255, blank=True, default='')
-    mother_name = models.CharField(max_length=255, blank=True, default='')
-    father_profession = models.CharField(max_length=255, blank=True, default='')
+    father_name = models.CharField(max_length=255, blank=True, default='', null=True)
+    mother_name = models.CharField(max_length=255, blank=True, default='', null=True)
+    father_profession = models.CharField(max_length=255, blank=True, default='', null=True)
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='GEN')
-    religion = models.CharField(max_length=50, blank=True, default='Hindu')
-    aadhar_no = models.CharField(max_length=20, blank=True)
-    apaar_id = models.CharField(max_length=20, blank=True)
+    religion = models.CharField(max_length=50, choices=RELIGION_CHOICES, default='Hindu')
+    aadhar_no = models.CharField(max_length=20, blank=True, null=True)
+    apaar_id = models.CharField(max_length=20, blank=True, null=True)
     mobile_no = models.CharField(max_length=15, blank=True, null=True)
     whatsapp_no = models.CharField(max_length=15, blank=True, null=True)
 
     photo = models.ImageField(upload_to='student_photos/', blank=True, null=True)
-    address = models.TextField(blank=True, default='')
+    address = models.TextField(blank=True, default='', null=True)
     email = models.EmailField(blank=True, null=True)
     
     is_active = models.BooleanField(default=True)

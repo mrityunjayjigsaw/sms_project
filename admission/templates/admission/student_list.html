@@ -4,6 +4,8 @@
     <title>Student List</title>
 </head>
 <body>
+    <p>Logged in as: {{ request.user.username }} (Superuser: {{ request.user.is_superuser }})</p>
+    <p>Found {{ students|length }} students</p>
     <a href="{% url 'home'%}"><button>Home</button></a>
     <a href="{% url 'admission_home'%}"><button>Back</button></a>
     <h2>Admitted Students</h2>

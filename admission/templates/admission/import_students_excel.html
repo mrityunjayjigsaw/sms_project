@@ -1,0 +1,14 @@
+<a href="{% url 'download_excel_template' %}">⬇️ Download Excel Template</a>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label>Select Excel File:</label>
+    <input type="file" name="student_file" required>
+    <button type="submit">Import Students</button>
+</form>
+
+<ul>
+    {% for message in messages %}
+        <li>{{ message }}</li>
+    {% endfor %}
+</ul>

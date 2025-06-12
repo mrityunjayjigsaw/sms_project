@@ -18,21 +18,35 @@ def admission_home(request):
 def admit_student(request):
     school = request.user.userprofile.school
 
-    # Generate admission_no in advance
-    last_student = StudentAdmission.objects.filter(school=school).order_by('id').last()
-    if last_student:
-        last_id = int(last_student.admission_no.replace('ADM', ''))
-        next_adm_no = f"ADM{last_id + 1:04d}"
+    # Generate next numeric admission_no
+    last_student = StudentAdmission.objects.filter(school=school).order_by('-id').first()
+    if last_student and last_student.admission_no.isdigit():
+        last_adm_no = int(last_student.admission_no)
+        next_adm_no = str(last_adm_no + 1)
     else:
-        next_adm_no = "ADM0001"
+        next_adm_no = '1001'  # Start from 1001 if no student or non-numeric
 
     if request.method == 'POST':
         form = StudentAdmissionForm(request.POST, request.FILES)
         if form.is_valid():
             student = form.save(commit=False)
             student.school = school
-            student.admission_no = next_adm_no  # still enforced here
+            student.admission_no = next_adm_no  # use numeric admission no
+            student.is_active = True  # ensure active on manual admit
             student.save()
+            
+            academic_year = form.cleaned_data['academic_year']
+            class_enrolled = form.cleaned_data['class_enrolled']
+            section = form.cleaned_data.get('section', '')
+
+            StudentAcademicRecord.objects.create(
+                student=student,
+                academic_year=academic_year,
+                class_enrolled=class_enrolled,
+                section=section,
+                school=school
+            )
+            
             return redirect('student_list')
     else:
         form = StudentAdmissionForm(initial={'admission_no': next_adm_no})
@@ -42,8 +56,15 @@ def admit_student(request):
 @login_required
 def student_list(request):
     school = request.user.userprofile.school
-    students = StudentAdmission.objects.filter(school=school, is_active=True)
-
+    if request.user.is_superuser:
+        students = StudentAdmission.objects.filter(is_active=True)
+        print("Found students:", students) 
+    else:
+        students = StudentAdmission.objects.filter(
+        school=school,
+        is_active=True
+    )
+    
     # Filters
     class_id = request.GET.get('class_id')
     year_id = request.GET.get('year_id')
@@ -222,3 +243,109 @@ def soft_delete_student(request, student_id):
         student.is_active = False
         student.save()
         return redirect('student_list')
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from openpyxl import load_workbook
+from django.utils.dateparse import parse_date
+from admission.models import StudentAdmission,AcademicYear, Class, StudentAcademicRecord
+from core.models import School
+from datetime import datetime, date
+
+
+@login_required
+def import_students_excel(request):
+    if request.method == 'POST' and request.FILES.get('student_file'):
+        excel_file = request.FILES['student_file']
+        wb = load_workbook(excel_file)
+        ws = wb.active
+        school = request.user.userprofile.school
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+
+        for row in rows:
+            try:
+                (
+                    full_name, date_of_birth, gender, category,
+                    religion, mobile_no, whatsapp_no, aadhar_no,
+                    admission_date, father_name, mother_name, father_profession,
+                    academic_year_str, class_name, section
+                ) = row
+
+                # Handle both Excel date formats and strings
+                if isinstance(date_of_birth, (datetime, date)):
+                    dob = date_of_birth
+                else:
+                    dob = parse_date(str(date_of_birth)) if date_of_birth else None
+
+                if not dob:
+                    messages.error(request, f"{full_name}: Invalid or missing date of birth.")
+                    continue
+
+                if isinstance(admission_date, (datetime, date)):
+                    adm_date = admission_date
+                else:
+                    adm_date = parse_date(str(admission_date)) if admission_date else None
+
+                if not adm_date:
+                    messages.error(request, f"{full_name}: Invalid or missing admission date.")
+                    continue
+
+                # Look up academic year and class
+                academic_year = AcademicYear.objects.get(name=academic_year_str, school=school)
+                class_enrolled = Class.objects.get(name=class_name, school=school)
+
+                # Generate admission number
+                last_student = StudentAdmission.objects.filter(school=school).order_by('-id').first()
+                next_adm_no = str(int(last_student.admission_no) + 1) if last_student and last_student.admission_no.isdigit() else '1001'
+
+                # Create student
+                student = StudentAdmission.objects.create(
+                    full_name=full_name,
+                    date_of_birth=dob,
+                    gender=gender,
+                    category=category,
+                    religion=religion,
+                    mobile_no=mobile_no,
+                    whatsapp_no=whatsapp_no,
+                    aadhar_no=aadhar_no,
+                    admission_date=adm_date,
+                    father_name=father_name,
+                    mother_name=mother_name,
+                    father_profession=father_profession,
+                    school=school,
+                    is_active=True,
+                    admission_no=next_adm_no
+                )
+
+                # Create academic record
+                StudentAcademicRecord.objects.create(
+                    student=student,
+                    academic_year=academic_year,
+                    class_enrolled=class_enrolled,
+                    section=section,
+                    school=school
+                )
+
+                messages.success(request, f"{full_name} imported successfully.")
+
+            except AcademicYear.DoesNotExist:
+                messages.error(request, f"{full_name}: Academic Year '{academic_year_str}' not found.")
+            except Class.DoesNotExist:
+                messages.error(request, f"{full_name}: Class '{class_name}' not found.")
+            except Exception as e:
+                messages.error(request, f"{full_name}: Error importing - {str(e)}")
+
+        return redirect('import_students_excel')
+
+    return render(request, 'admission/import_students_excel.html')
+
+
+
+from django.http import FileResponse
+import os
+from django.conf import settings
+@login_required
+def download_excel_template(request):
+    file_path = os.path.join(settings.BASE_DIR, 'static/admission/student_import_template.xlsx')
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='student_template.xlsx')

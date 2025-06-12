@@ -1,7 +1,23 @@
 from django import forms
 from .models import StudentAdmission, StudentAcademicRecord
+from .models import Class, AcademicYear
 
 class StudentAdmissionForm(forms.ModelForm):
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.all(),
+        required=True,
+        label="Academic Year"
+    )
+    class_enrolled = forms.ModelChoiceField(
+        queryset=Class.objects.all(),
+        required=True,
+        label="Class"
+    )
+    section = forms.CharField(
+        max_length=10,
+        required=False,
+        label="Section"
+    )
     class Meta:
         model = StudentAdmission
         fields = [
@@ -21,25 +37,39 @@ class StudentAdmissionForm(forms.ModelForm):
         self.fields['admission_no'].widget.attrs['readonly'] = True
 
     def clean_mobile_no(self):
-        mobile = self.cleaned_data['mobile_no']
-        if not mobile.isdigit() or len(mobile) != 10:
-            raise forms.ValidationError("Mobile number must be exactly 10 digits.")
-        return mobile
+        mobile_no = self.cleaned_data.get('mobile_no')
+        if mobile_no:
+            if not str(mobile_no).isdigit():
+                raise forms.ValidationError("Mobile number should contain only digits.")
+            if len(str(mobile_no)) != 10:
+                raise forms.ValidationError("Mobile number must be 10 digits.")
+        return mobile_no  # This allows None/empty value to pass
 
     def clean_whatsapp_no(self):
         whatsapp = self.cleaned_data.get('whatsapp_no')
-        if whatsapp and (not whatsapp.isdigit() or len(whatsapp) != 10):
-            raise forms.ValidationError("WhatsApp number must be 10 digits if provided.")
-        return whatsapp
+        if whatsapp:
+            whatsapp = str(whatsapp).strip()  # Ensure it's a string and trimmed
+            if not whatsapp.isdigit():
+                raise forms.ValidationError("WhatsApp number should contain only digits.")
+            if len(whatsapp) != 10:
+                raise forms.ValidationError("WhatsApp number must be exactly 10 digits.")
+
+        return whatsapp  # Blank values are allowed
+
 
     def clean_aadhar_no(self):
         aadhar = self.cleaned_data.get('aadhar_no')
-        if aadhar and (not aadhar.isdigit() or len(aadhar) != 12):
-            raise forms.ValidationError("Aadhar number must be exactly 12 digits.")
-        return aadhar
+        if aadhar:
+            aadhar = str(aadhar).strip()
+            if not aadhar.isdigit():
+                raise forms.ValidationError("Aadhar number should contain only digits.")
+            if len(aadhar) != 12:
+                raise forms.ValidationError("Aadhar number must be exactly 12 digits.")
+        
+        return aadhar  # Blank values are allowed
+
     
-    
-from .models import Class, AcademicYear
+
 
 class ClassForm(forms.ModelForm):
     class Meta:
@@ -64,3 +94,6 @@ class StudentAcademicRecordForm(forms.ModelForm):
             'section': forms.TextInput(attrs={'placeholder': 'Optional'}),
             'remarks': forms.Textarea(attrs={'rows': 2}),
         }
+
+class ExcelUploadForm(forms.Form):
+    excel_file = forms.FileField(label="Select Excel File (.xlsx)")

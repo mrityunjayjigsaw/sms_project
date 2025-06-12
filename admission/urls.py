@@ -18,6 +18,10 @@ urlpatterns = [
     path('student/<int:student_id>/profile/', views.student_profile, name='student_profile'),
     path('student/<int:student_id>/edit/', views.edit_student, name='edit_student'),
     path('student/<int:student_id>/soft_delete/', views.soft_delete_student, name='soft_delete_student'),
+    # path('bulk-upload-excel/', views.bulk_upload_students_excel, name='bulk_upload_excel'),
+    path('download-template/', views.download_excel_template, name='download_excel_template'),
+    
+    path('import_students_excel/', views.import_students_excel, name='import_students_excel'),
 
 
 ]

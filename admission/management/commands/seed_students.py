@@ -20,10 +20,10 @@ class Command(BaseCommand):
 
         for i in range(20):  # Create 20 dummy students
             full_name = fake.name()
-            admission_no = f"ADM{1000 + i}"
+            admission_no = str(1000 + i)
             student = StudentAdmission.objects.create(
                 admission_no=admission_no,
-                ssr_no=f"SSR{i+1:03d}",
+                ssr_no=str(1000 + i),
                 full_name=full_name,
                 gender=random.choice(['M', 'F']),
                 date_of_birth=fake.date_of_birth(minimum_age=5, maximum_age=17),
