@@ -1,0 +1,39 @@
+<a href="{% url 'home'%}"><button>Home</button></a>
+<a href="{% url 'admission_home'%}"><button>Back</button></a>
+<h2>Academic Records for {{ student.full_name }}</h2>
+
+<table border="1">
+    <tr>
+        <th>Academic Year</th>
+        <th>Class</th>
+        <th>Section</th>
+        <th>Promoted?</th>
+        <th>Promoted To</th>
+        <th>Remarks</th>
+    </tr>
+    {% for record in records %}
+    <tr>
+        <td>{{ record.academic_year.name }}</td>
+        <td>{{ record.class_enrolled.name }}</td>
+        <td>{{ record.section|default:"-" }}</td>
+        <td>{{ record.is_promoted|yesno:"Yes,No" }}</td>
+        <td>
+        {% if record.promoted_to %}
+            {{ record.promoted_to.name }}
+        {% else %}
+            -
+        {% endif %}
+        </td>
+        <td>{{ record.remarks|default:"-" }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="6">No academic records found.</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<p>
+    <a href="{% url 'assign_class_year' student.id %}">➕ Assign New Class/Year</a><br>
+    <a href="{% url 'student_list' %}">← Back to Student List</a>
+</p>

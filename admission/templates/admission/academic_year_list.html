@@ -1,0 +1,25 @@
+<a href="{% url 'home'%}"><button>Home</button></a>
+<a href="{% url 'admission_home'%}"><button>Back</button></a>
+<h2>Academic Year List</h2>
+<table border="1">
+    <tr>
+        <th>Name</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Is Current</th>
+        <th>Actions</th>
+    </tr>
+    {% for year in years %}
+    <tr>
+        <td>{{ year.name }}</td>
+        <td>{{ year.start_date }}</td>
+        <td>{{ year.end_date }}</td>
+        <td>{{ year.is_current|yesno:"Yes,No" }}</td>
+        <td>
+            <a href="{% url 'edit_year' year.id %}">Edit</a> |
+            <a href="{% url 'delete_year' year.id %}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{% url 'admission_home' %}">← Back</a>

@@ -4,6 +4,8 @@
     <title>Student List</title>
 </head>
 <body>
+    <a href="{% url 'home'%}"><button>Home</button></a>
+    <a href="{% url 'admission_home'%}"><button>Back</button></a>
     <h2>Admitted Students</h2>
 
     <form method="get">
@@ -48,6 +50,15 @@
             <td>{{ student.date_of_birth }}</td>
             <td>{{ student.contact_number }}</td>
             <td>{{ student.email }}</td>
+            <td>
+                <a href="{% url 'assign_class_year' student.id %}">Assign Class/Year</a>
+            </td>
+            <td>
+                <a href="{% url 'view_academic_records' student.id %}">View Records</a>
+            </td>
+            <td>
+                <a href="{% url 'student_profile' student.id %}">Profile</a>
+            </td>
         </tr>
         {% empty %}
         <tr><td colspan="6">No students found.</td></tr>

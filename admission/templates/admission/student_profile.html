@@ -1,0 +1,56 @@
+<h2>Student Profile: {{ student.full_name }}</h2>
+
+<h3>👤 Personal Information</h3>
+<ul>
+    <li><strong>Admission No:</strong> {{ student.admission_no }}</li>
+    <li><strong>Gender:</strong> {{ student.get_gender_display }}</li>
+    <li><strong>Date of Birth:</strong> {{ student.date_of_birth }}</li>
+    <li><strong>Father's Name:</strong> {{ student.father_name }}</li>
+    <li><strong>Mother's Name:</strong> {{ student.mother_name }}</li>
+    <li><strong>Category:</strong> {{ student.category }}</li>
+    <li><strong>Religion:</strong> {{ student.religion }}</li>
+    <li><strong>Mobile No:</strong> {{ student.mobile_no }}</li>
+    <li><strong>WhatsApp No:</strong> {{ student.whatsapp_no }}</li>
+    <li><strong>Aadhaar No:</strong> {{ student.aadhar_no }}</li>
+    <li><strong>Admission Date:</strong> {{ student.admission_date }}</li>
+</ul>
+
+<h3>📚 Academic Records</h3>
+<table border="1">
+    <tr>
+        <th>Year</th>
+        <th>Class</th>
+        <th>Section</th>
+        <th>Promoted?</th>
+        <th>Promoted To</th>
+        <th>Remarks</th>
+    </tr>
+    {% for record in records %}
+    <tr>
+        <td>{{ record.academic_year.name }}</td>
+        <td>{{ record.class_enrolled.name }}</td>
+        <td>{{ record.section|default:"-" }}</td>
+        <td>{{ record.is_promoted|yesno:"Yes,No" }}</td>
+        <td>{% if record.promoted_to %}{{ record.promoted_to.name }}{% else %}-{% endif %}</td>
+        <td>{{ record.remarks|default:"-" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">No academic records found.</td></tr>
+    {% endfor %}
+</table>
+
+<h4>🛠 Actions</h4>
+<ul>
+    <li><a href="{% url 'assign_class_year' student.id %}">➕ Assign New Class/Year</a></li>
+    <li><a href="{% url 'edit_student' student.id %}">✏️ Edit Student Info</a></li>
+    <li><a href="{% url 'student_list' %}">← Back to Student List</a></li>
+</ul>
+
+{% if student.is_active %}
+    <form method="post" action="{% url 'soft_delete_student' student.id %}">
+        {% csrf_token %}
+        <button type="submit">Mark as Left School</button>
+    </form>
+{% else %}
+    <p><strong>Status:</strong> Left School</p>
+{% endif %}

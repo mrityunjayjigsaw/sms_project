@@ -1,5 +1,5 @@
 from django import forms
-from .models import StudentAdmission
+from .models import StudentAdmission, StudentAcademicRecord
 
 class StudentAdmissionForm(forms.ModelForm):
     class Meta:
@@ -54,4 +54,13 @@ class AcademicYearForm(forms.ModelForm):
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class StudentAcademicRecordForm(forms.ModelForm):
+    class Meta:
+        model = StudentAcademicRecord
+        fields = ['academic_year', 'class_enrolled', 'section', 'remarks']
+        widgets = {
+            'section': forms.TextInput(attrs={'placeholder': 'Optional'}),
+            'remarks': forms.Textarea(attrs={'rows': 2}),
         }

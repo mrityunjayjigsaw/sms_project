@@ -1,0 +1,23 @@
+<a href="{% url 'home'%}"><button>Home</button></a>
+<a href="{% url 'admission_home'%}"><button>Back</button></a>
+<h2>Class List</h2>
+<table border="1">
+    <tr>
+        <th>Name</th>
+        <th>Stream</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    {% for cls in classes %}
+    <tr>
+        <td>{{ cls.name }}</td>
+        <td>{{ cls.stream }}</td>
+        <td>{{ cls.is_active|yesno:"Active,Inactive" }}</td>
+        <td>
+            <a href="{% url 'edit_class' cls.id %}">Edit</a> |
+            <a href="{% url 'delete_class' cls.id %}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{% url 'admission_home' %}">← Back</a>

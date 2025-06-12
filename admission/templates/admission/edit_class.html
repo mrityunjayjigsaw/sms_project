@@ -1,0 +1,7 @@
+<h2>Edit Class</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+</form>
+<a href="{% url 'class_list' %}">← Back to Class List</a>

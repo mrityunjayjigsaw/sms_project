@@ -1,0 +1,9 @@
+<h2>Edit Student Info: {{ student.full_name }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+</form>
+
+<a href="{% url 'student_profile' student.id %}">← Back to Profile</a>

@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect
-from .forms import StudentAdmissionForm, ClassForm, AcademicYearForm
+from .forms import StudentAdmissionForm, ClassForm, AcademicYearForm, StudentAcademicRecordForm
 from .models import StudentAdmission, StudentAcademicRecord, Class, AcademicYear
 from core.models import UserProfile
 from django.contrib.auth.decorators import login_required
@@ -96,3 +96,129 @@ def add_academic_year(request):
         year.save()
         return redirect('admission_home')
     return render(request, 'admission/add_academic_year.html', {'form': form})
+
+@login_required
+def class_list(request):
+    school = request.user.userprofile.school
+    classes = Class.objects.filter(school=school)
+    return render(request, 'admission/class_list.html', {'classes': classes})
+
+
+@login_required
+def academic_year_list(request):
+    school = request.user.userprofile.school
+    years = AcademicYear.objects.filter(school=school)
+    return render(request, 'admission/academic_year_list.html', {'years': years})
+
+@login_required
+def edit_class(request, class_id):
+    school = request.user.userprofile.school
+    cls = Class.objects.get(id=class_id, school=school)
+    form = ClassForm(request.POST or None, instance=cls)
+    if form.is_valid():
+        form.save()
+        return redirect('class_list')
+    return render(request, 'admission/edit_class.html', {'form': form})
+
+@login_required
+def delete_class(request, class_id):
+    school = request.user.userprofile.school
+    cls = Class.objects.get(id=class_id, school=school)
+    if request.method == 'POST':
+        cls.delete()
+        return redirect('class_list')
+    return render(request, 'admission/delete_confirm.html', {'object': cls, 'type': 'Class'})
+
+@login_required
+def edit_year(request, year_id):
+    school = request.user.userprofile.school
+    year = AcademicYear.objects.get(id=year_id, school=school)
+    form = AcademicYearForm(request.POST or None, instance=year)
+    if form.is_valid():
+        form.save()
+        return redirect('academic_year_list')
+    return render(request, 'admission/edit_year.html', {'form': form})
+
+@login_required
+def delete_year(request, year_id):
+    school = request.user.userprofile.school
+    year = AcademicYear.objects.get(id=year_id, school=school)
+    if request.method == 'POST':
+        year.delete()
+        return redirect('academic_year_list')
+    return render(request, 'admission/delete_confirm.html', {'object': year, 'type': 'Academic Year'})
+
+@login_required
+def assign_class_year(request, student_id):
+    student = StudentAdmission.objects.get(id=student_id)
+    school = request.user.userprofile.school
+
+    # Check if student already has an academic record for this year (optional)
+    existing_record = StudentAcademicRecord.objects.filter(student=student, school=school).last()
+
+    form = StudentAcademicRecordForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        record = form.save(commit=False)
+        record.student = student
+        record.school = school
+        record.save()
+        return redirect('student_list')
+
+    return render(request, 'admission/assign_class_year.html', {
+        'form': form,
+        'student': student,
+        'existing_record': existing_record
+    })
+from django.shortcuts import get_object_or_404 
+@login_required
+def view_academic_records(request, student_id):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+    records = student.academic_records.select_related('academic_year', 'class_enrolled', 'promoted_to')
+
+    return render(request, 'admission/view_academic_records.html', {
+        'student': student,
+        'records': records
+    })
+
+@login_required
+def student_profile(request, student_id):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+    records = student.academic_records.select_related('academic_year', 'class_enrolled', 'promoted_to')
+    
+    return render(request, 'admission/student_profile.html', {
+        'student': student,
+        'records': records
+    })
+
+from .forms import StudentAdmissionForm
+from django.http import HttpResponseForbidden
+
+@login_required
+def edit_student(request, student_id):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+    school = request.user.userprofile.school
+
+    # Restrict editing only to same school
+    if student.school != school:
+        return HttpResponseForbidden("You don't have permission to edit this student.")
+
+    form = StudentAdmissionForm(request.POST or None, instance=student)
+
+    if form.is_valid():
+        form.save()
+        return redirect('student_profile', student_id=student.id)
+
+    return render(request, 'admission/edit_student.html', {'form': form, 'student': student})
+
+
+@login_required
+def soft_delete_student(request, student_id):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+    if request.user.userprofile.school != student.school:
+        return HttpResponseForbidden("You don't have permission to delete this student.")
+    
+    if request.method == 'POST':
+        student.is_active = False
+        student.save()
+        return redirect('student_list')

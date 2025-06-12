@@ -24,3 +24,18 @@ class ClassAdmin(admin.ModelAdmin):
     list_filter = ['stream', 'school']
     search_fields = ['name']
 
+from django.contrib import admin
+from .models import StudentAdmission, StudentAcademicRecord, Class, AcademicYear
+
+@admin.register(StudentAdmission)
+class StudentAdmissionAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'admission_no', 'school', 'gender', 'date_of_birth', 'is_active')
+    search_fields = ('full_name', 'admission_no')
+    list_filter = ('gender', 'is_active', 'category', 'religion')
+    ordering = ('admission_no',)
+
+@admin.register(StudentAcademicRecord)
+class StudentAcademicRecordAdmin(admin.ModelAdmin):
+    list_display = ('student', 'academic_year', 'class_enrolled', 'section', 'is_promoted')
+    list_filter = ('academic_year', 'class_enrolled', 'is_promoted')
+
