@@ -1,25 +1,12 @@
-from django.shortcuts import render
-from django.shortcuts import render, redirect
-from .forms import BulkFeePlanForm
-from admission.models import StudentAcademicRecord
-from .models import FeeType, StudentFeePlan
-from django.db import transaction
-from django.shortcuts import render, redirect
-from .forms import PostingFeesForm
-from django.shortcuts import render
-from .forms import FeeCollectionFilterForm
-from django.shortcuts import get_object_or_404
-from admission.models import StudentAdmission
-from datetime import datetime
+
+from django.shortcuts import render, redirect,get_object_or_404
+from .forms import *
+from admission.models import *
 from .models import *
-from transactions.models import Transaction, AccountHead
-from datetime import date, timedelta
-# Create your views here.
-from django.shortcuts import render, redirect
-from .forms import FeeTypeForm
-from .models import FeeType
-from django.db.models import Q
-from django.db.models import Sum
+from transactions.models import *
+from django.db import transaction
+from django.db.models import Q, Sum
+from datetime import datetime,date, timedelta
 from decimal import Decimal
 
 
@@ -351,7 +338,8 @@ def collect_fee_step2(request, student_id, month_str):
             'amount_paid': amount_paid,
             'allocated': total_allocated,
             'carry_forward': remaining,
-            'payment_mode': payment_mode
+            'payment_mode': payment_mode,
+            'payment': payment,
         })
 
     return render(request, 'fees/collect_fee_step2.html', {
@@ -362,6 +350,35 @@ def collect_fee_step2(request, student_id, month_str):
         'step': 'entry',
         'total_due': total_due,
     })
+
+
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from .models import StudentFeePayment
+import os
+
+def download_receipt(request, payment_id):
+    payment = StudentFeePayment.objects.select_related('student').prefetch_related('details__fee_type').get(id=payment_id)
+    template_path = 'fees/fee_receipt.html'
+    context = {
+        'payment': payment,
+        'student': payment.student,
+        'details': payment.details.all(),
+        'school_name': 'My School Name',  # Can be customized later
+        'logo_url': os.path.join('static', 'school_logo.png'),  # optional
+        'copy_types': ['Student', 'Office'],  # For duplicate receipts
+    }
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename="receipt_{payment.student.full_name}_{payment.month.strftime("%Y_%m")}.pdf"'
+
+    template = get_template(template_path)
+    html = template.render(context)
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('We had errors rendering PDF', status=500)
+    return response
 
 
 

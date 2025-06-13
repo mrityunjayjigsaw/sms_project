@@ -3,5 +3,6 @@
 <p><strong>Amount Paid:</strong> ₹{{ amount_paid }}</p>
 <p><strong>Allocated to Dues:</strong> ₹{{ allocated }}</p>
 <p><strong>Advance Carried Forward:</strong> ₹{{ carry_forward }}</p>
+<a href="{% url 'download_receipt' payment.id %}" target="_blank">🧾 Download Receipt (PDF)</a>
 
 <a href="{% url 'fee_collection_filter' %}">🔁 Collect More</a>

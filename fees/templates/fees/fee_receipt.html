@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: "Helvetica", sans-serif;
+            font-size: 12px;
+        }
+        .receipt {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .half {
+            width: 48%;
+            border: 1px solid #000;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 8px;
+        }
+        .border-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .border-table th, .border-table td {
+            border: 1px solid black;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="receipt">
+    {% for copy in copy_types %}
+    <div class="half">
+        <div class="title">{{ school_name }} <br> Fee Receipt ({{ copy }} Copy)</div>
+
+        <div class="section">
+            <strong>Student:</strong> {{ student.full_name }}<br>
+            <strong>Class:</strong>
+            {% if student.class_enrolled %}
+                {{ student.class_enrolled.name }}
+            {% else %}
+                -
+            {% endif %}<br>
+            <strong>Month:</strong> {{ payment.month|date:"F Y" }}<br>
+            <strong>Date:</strong> {{ payment.date }}<br>
+            <strong>Payment Mode:</strong> {{ payment.get_payment_mode_display }}
+        </div>
+
+        <table class="border-table">
+            <thead>
+                <tr>
+                    <th>Fee Type</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in details %}
+                <tr>
+                    <td>{{ item.fee_type.name }}</td>
+                    <td>₹{{ item.amount_paid }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td><strong>Total Paid</strong></td>
+                    <td><strong>₹{{ payment.total_amount }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section" style="margin-top: 20px;">
+            <strong>Remarks:</strong> {{ payment.remarks|default:"-" }}
+        </div>
+
+        <div style="margin-top: 40px;">
+            ___________________________<br>
+            Authorized Signature
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</body>
+</html>
