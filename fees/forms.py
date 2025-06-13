@@ -1,6 +1,6 @@
 from django import forms
 from .models import FeeType
-from admission.models import AcademicYear, Class
+from admission.models import AcademicYear, Class, StudentAdmission
 
 class FeeTypeForm(forms.ModelForm):
     class Meta:
@@ -19,3 +19,17 @@ class PostingFeesForm(forms.Form):
     academic_year = forms.ModelChoiceField(queryset=AcademicYear.objects.all(), required=True)
     class_enrolled = forms.ModelChoiceField(queryset=Class.objects.all(), required=True)
     month = forms.DateField(input_formats=['%Y-%m'], widget=forms.DateInput(attrs={'type': 'month'}), required=True)
+
+# fees/forms.py
+
+class FeeCollectionFilterForm(forms.Form):
+    academic_year = forms.ModelChoiceField(queryset=AcademicYear.objects.all(), label="Academic Year")
+    class_enrolled = forms.ModelChoiceField(queryset=Class.objects.all(), label="Class")
+
+    month = forms.DateField(
+        input_formats=['%Y-%m'],
+        widget=forms.DateInput(attrs={'type': 'month'}),
+        required=True,
+        label="Month (e.g., April 2025)"
+    )
+

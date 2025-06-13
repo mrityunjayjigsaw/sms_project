@@ -6,8 +6,12 @@ from .models import FeeType, StudentFeePlan
 from django.db import transaction
 from django.shortcuts import render, redirect
 from .forms import PostingFeesForm
-
-from .models import StudentFeePlan, FeeType, StudentFeeDue
+from django.shortcuts import render
+from .forms import FeeCollectionFilterForm
+from django.shortcuts import get_object_or_404
+from admission.models import StudentAdmission
+from datetime import datetime
+from .models import *
 from transactions.models import Transaction, AccountHead
 from datetime import date, timedelta
 # Create your views here.
@@ -15,6 +19,8 @@ from django.shortcuts import render, redirect
 from .forms import FeeTypeForm
 from .models import FeeType
 from django.db.models import Q
+from django.db.models import Sum
+from decimal import Decimal
 
 
 def fees_home(request):
@@ -186,5 +192,179 @@ def assign_fees_bulk(request):
         'selected_class_id': selected_class_id,
         'already_posted': already_posted,
     })
+
+
+def view_posted_fees_detail(request):
+    form = PostingFeesForm(request.POST or None)
+    students = []
+    fee_types = FeeType.objects.all()
+    dues_dict = {}
+
+    if request.method == 'POST' and form.is_valid():
+        academic_year = form.cleaned_data['academic_year']
+        class_enrolled = form.cleaned_data['class_enrolled']
+        month = form.cleaned_data['month']
+        school = request.user.userprofile.school
+
+        # Get students in class/year
+        students = StudentAcademicRecord.objects.filter(
+            academic_year=academic_year,
+            class_enrolled=class_enrolled,
+            school=school
+        ).select_related('student')
+
+        # Fetch dues for selected month
+        for record in students:
+            student = record.student
+            student.due_map = {}
+
+            for fee_type in fee_types:
+                due = StudentFeeDue.objects.filter(
+                    student=student,
+                    fee_type=fee_type,
+                    month=month,
+                    is_posted=True
+                ).first()
+                student.due_map[fee_type.id] = due.amount_due if due else ""
+
+    return render(request, 'fees/view_posted_fees_detail.html', {
+        'form': form,
+        'students': students,
+        'fee_types': fee_types,
+    })
+
+# fees/views.py
+
+
+def fee_collection_filter(request):
+    form = FeeCollectionFilterForm(request.POST or None)
+    students = []
+    selected_month_str = None
+
+    if request.method == 'POST' and form.is_valid():
+        academic_year = form.cleaned_data['academic_year']
+        class_enrolled = form.cleaned_data['class_enrolled']
+        month = form.cleaned_data['month']  # this will be a `date` object like 2025-04-01
+        school = request.user.userprofile.school
+
+        selected_month_str = month.strftime('%Y-%m')  # for URL in student list
+
+        students = StudentAcademicRecord.objects.filter(
+            academic_year=academic_year,
+            class_enrolled=class_enrolled,
+            school=school
+        ).select_related('student')
+
+    return render(request, 'fees/fee_collection_filter.html', {
+        'form': form,
+        'students': students,
+        'selected_month': selected_month_str
+    })
+
+
+def collect_fee_step2(request, student_id, month_str):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+    month_date = date.fromisoformat(month_str + "-01")
+    fee_types = FeeType.objects.all()
+    dues = StudentFeeDue.objects.filter(student=student, is_posted=True).order_by('month')
+    advance_obj, _ = StudentAdvanceBalance.objects.get_or_create(student=student)
+    advance_amount = advance_obj.advance_amount
+    total_due = dues.aggregate(total=Sum('amount_due'))['total'] or Decimal('0.00')
+
+    if request.method == 'POST' and 'allocate' in request.POST:
+        amount_paid = Decimal(request.POST.get('amount_paid', '0'))
+        payment_mode = request.POST.get('payment_mode', 'CASH')
+        remaining = amount_paid + advance_amount
+        allocated = []
+
+        for due in dues:
+            if remaining <= 0:
+                break
+            alloc = min(remaining, due.amount_due)
+            if alloc > 0:
+                allocated.append({
+                    'month': due.month,
+                    'fee_type': due.fee_type,
+                    'amount': alloc
+                })
+            remaining -= Decimal(alloc)
+
+        return render(request, 'fees/collect_fee_step2.html', {
+            'student': student,
+            'month': month_date,
+            'dues': dues,
+            'advance': advance_amount,
+            'amount_paid': amount_paid,
+            'allocated': allocated,
+            'payment_mode': payment_mode,
+            'step': 'preview',
+            'total_due': total_due,
+        })
+
+    if request.method == 'POST' and 'submit_payment' in request.POST:
+        amount_paid = Decimal(request.POST.get('amount_paid', '0'))
+        payment_mode = request.POST.get('payment_mode', 'CASH')
+        remaining = amount_paid + advance_amount
+
+        with transaction.atomic():
+            total_allocated = Decimal('0.00')
+            payment = StudentFeePayment.objects.create(
+                student=student,
+                month=month_date,
+                total_amount=amount_paid,
+                payment_mode=payment_mode,
+                remarks=f"Fees collected for {month_date.strftime('%B %Y')}"
+            )
+
+            for due in dues:
+                if remaining <= 0:
+                    break
+                alloc = min(remaining, due.amount_due)
+                if alloc > 0:
+                    due.amount_due -= Decimal(alloc)
+                    due.save()
+
+                    StudentFeePaymentDetail.objects.create(
+                        payment=payment,
+                        fee_type=due.fee_type,
+                        amount_paid=Decimal(alloc)
+                    )
+
+                    Transaction.objects.create(
+                        date=date.today(),
+                        debit_account=AccountHead.objects.get(name="CASH" if payment_mode == "CASH" else "BANK"),
+                        credit_account=due.fee_type.account_head,
+                        amount=Decimal(alloc),
+                        remarks=f"{student.full_name} - {due.fee_type.name} ({due.month.strftime('%B %Y')})",
+                        school=student.school
+                    )
+
+                    total_allocated += Decimal(alloc)
+
+                remaining -= Decimal(alloc)
+
+            advance_obj.advance_amount = remaining
+            advance_obj.save()
+
+        return render(request, 'fees/collection_success.html', {
+            'student': student,
+            'amount_paid': amount_paid,
+            'allocated': total_allocated,
+            'carry_forward': remaining,
+            'payment_mode': payment_mode
+        })
+
+    return render(request, 'fees/collect_fee_step2.html', {
+        'student': student,
+        'month': month_date,
+        'dues': dues,
+        'advance': advance_amount,
+        'step': 'entry',
+        'total_due': total_due,
+    })
+
+
+
+
 
 

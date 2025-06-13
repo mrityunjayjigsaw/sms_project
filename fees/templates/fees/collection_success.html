@@ -1,0 +1,7 @@
+<h2>✅ Payment Successful</h2>
+<p><strong>Student:</strong> {{ student.full_name }}</p>
+<p><strong>Amount Paid:</strong> ₹{{ amount_paid }}</p>
+<p><strong>Allocated to Dues:</strong> ₹{{ allocated }}</p>
+<p><strong>Advance Carried Forward:</strong> ₹{{ carry_forward }}</p>
+
+<a href="{% url 'fee_collection_filter' %}">🔁 Collect More</a>

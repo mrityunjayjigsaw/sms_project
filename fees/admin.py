@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import StudentOpeningBalance, StudentFeePlan, FeeType, StudentFeeDue
-
-
+from .models import StudentFeePayment, StudentFeePaymentDetail
+from .models import StudentAdvanceBalance
 # Register your models here.
 
 @admin.register(FeeType)
@@ -30,3 +30,19 @@ class StudentFeeDueAdmin(admin.ModelAdmin):
     list_display = ['student', 'fee_type', 'month', 'amount_due', 'is_posted']
     list_filter = ['month', 'fee_type', 'is_posted']
     search_fields = ['student__full_name']
+
+
+class PaymentDetailInline(admin.TabularInline):
+    model = StudentFeePaymentDetail
+    extra = 0
+
+@admin.register(StudentFeePayment)
+class StudentFeePaymentAdmin(admin.ModelAdmin):
+    list_display = ['student', 'month', 'total_amount', 'date']
+    inlines = [PaymentDetailInline]
+
+
+
+@admin.register(StudentAdvanceBalance)
+class StudentAdvanceAdmin(admin.ModelAdmin):
+    list_display = ['student', 'advance_amount', 'updated_at']

@@ -1,0 +1,69 @@
+<h2>💳 Collect Fees: {{ student.full_name }}</h2>
+<p><strong>Month:</strong> {{ month|date:"F Y" }}</p>
+<p><strong>Advance Balance:</strong> ₹{{ advance }}</p>
+<p><strong>Total Due:</strong> ₹{{ total_due }}</p>
+
+{% if step == 'preview' %}
+    <h3>💡 Allocation Preview</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="submit_payment" value="1">
+        <input type="hidden" name="amount_paid" value="{{ amount_paid }}">
+        <input type="hidden" name="payment_mode" value="{{ payment_mode }}">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Fee Type</th>
+                    <th>Allocated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in allocated %}
+                <tr>
+                    <td>{{ item.month|date:"F Y" }}</td>
+                    <td>{{ item.fee_type.name }}</td>
+                    <td>₹{{ item.amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit">✅ Submit Payment</button>
+    </form>
+    <a href="{% url 'fee_collection_filter' %}">Cancel</a>
+
+{% else %}
+    <form method="post">
+        {% csrf_token %}
+        <label><strong>Enter Amount Paid:</strong></label>
+        <input type="number" name="amount_paid" step="0.01" required>
+
+        <label><strong>Mode of Payment:</strong></label>
+        <select name="payment_mode" required>
+            <option value="CASH">Cash</option>
+            <option value="BANK">Online/Bank</option>
+        </select>
+
+        <button type="submit" name="allocate">Allocate</button>
+    </form>
+
+    <h3>Dues (All Months)</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Fee Type</th>
+                <th>Amount Due</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for due in dues %}
+            <tr>
+                <td>{{ due.month|date:"F Y" }}</td>
+                <td>{{ due.fee_type.name }}</td>
+                <td>₹{{ due.amount_due }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

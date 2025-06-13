@@ -56,3 +56,36 @@ class StudentFeeDue(models.Model):
     def __str__(self):
         return f"{self.student.full_name} | {self.fee_type.name} | ₹{self.amount_due} | {self.month.strftime('%b %Y')}"
 
+
+class StudentFeePayment(models.Model):
+    PAYMENT_MODE_CHOICES = [
+        ('CASH', 'Cash'),
+        ('BANK', 'Online/Bank'),
+    ]
+
+    student = models.ForeignKey(StudentAdmission, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True)
+    month = models.DateField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES, default='CASH')  # ✅
+    remarks = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.student.full_name} - ₹{self.total_amount} - {self.month.strftime('%B %Y')}"
+
+
+class StudentFeePaymentDetail(models.Model):
+    payment = models.ForeignKey(StudentFeePayment, on_delete=models.CASCADE, related_name="details")
+    fee_type = models.ForeignKey(FeeType, on_delete=models.CASCADE)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.fee_type.name}: ₹{self.amount_paid}"
+
+class StudentAdvanceBalance(models.Model):
+    student = models.OneToOneField(StudentAdmission, on_delete=models.CASCADE)
+    advance_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.full_name} - ₹{self.advance_amount} advance"
