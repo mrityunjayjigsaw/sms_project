@@ -1,0 +1,40 @@
+<h2>Assign Fee Plan (Bulk)</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" name="filter_students">Filter Students</button>
+</form>
+
+{% if students %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="save_fee_plan" value="1">
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Student</th>
+                {% for fee_type in fee_types %}
+                    <th>{{ fee_type.name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in students %}
+                <tr>
+                    <td>{{ record.student.full_name }}</td>
+                    {% for fee_type in fee_types %}
+                        <td>
+                            <input type="number" step="0.01" name="amount_{{ record.student.id }}_{{ fee_type.id }}"
+                                   value="" placeholder="₹">
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit">Save Fee Plans</button>
+</form>
+{% endif %}
+
+<a href="{% url 'fees_home' %}">⬅ Back to Fees Home</a>

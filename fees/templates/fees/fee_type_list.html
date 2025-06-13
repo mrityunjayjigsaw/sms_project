@@ -1,0 +1,16 @@
+<h2>Fee Types</h2>
+<table border="1">
+    <tr>
+        <th>Name</th>
+        <th>Recurring?</th>
+        <th>Account</th>
+    </tr>
+    {% for ft in fee_types %}
+    <tr>
+        <td>{{ ft.name }}</td>
+        <td>{{ ft.is_recurring }}</td>
+        <td>{{ ft.account_head.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{% url 'add_fee_type' %}">Add New Fee Type</a>

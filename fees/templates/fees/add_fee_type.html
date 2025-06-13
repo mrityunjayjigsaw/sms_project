@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Fee Type</title>
+</head>
+<body>
+    <h2>Add Fee Type</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Add Fee Type</button>
+    </form>
+    <a href="{% url 'fee_type_list' %}">Back to Fee Types</a>
+</body>
+</html>

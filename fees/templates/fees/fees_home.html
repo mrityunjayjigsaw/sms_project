@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fees Module Home</title>
+</head>
+<body>
+    <h2>Fees Module</h2>
+
+    <ul>
+        <li><a href="{% url 'add_fee_type' %}">➕ Add Fee Type</a></li>
+        <li><a href="{% url 'fee_type_list' %}">📋 View Fee Types</a></li>
+        <!-- Add these when implemented -->
+        <li><a href="{% url 'assign_fee_plan_bulk' %}">📌 Assign Student Fee Plans</a></li>
+        <li><a href="{% url 'assign_fees_bulk' %}">📅 Post Monthly Fees</a></li>
+        <li><a href="#">💰 Collect Fee Payment</a></li>
+        <li><a href="#">📑 View Student Fee Ledger</a></li>
+    </ul>
+
+    <a href="{% url 'home' %}">⬅ Back to Home</a>
+</body>
+</html>
