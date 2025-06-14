@@ -1,0 +1,26 @@
+<!-- templates/transactions/add_manual_transaction.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual Transaction Entry</title>
+</head>
+<body>
+    <h2>Enter Manual Transaction</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color:green;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        <button type="submit">Submit Transaction</button>
+    </form>
+
+    <a href="{% url 'home' %}">← Back to Home</a>
+</body>
+</html>

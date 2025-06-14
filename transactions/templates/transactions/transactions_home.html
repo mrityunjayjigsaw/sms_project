@@ -1,0 +1,19 @@
+<!-- templates/transactions/transactions_home.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transactions Module</title>
+</head>
+<body>
+    <h2>Transactions Dashboard</h2>
+
+    <ul>
+        <li><a href="{% url 'add_manual_transaction' %}">📥 Add Manual Transaction</a></li>
+        <li><a href="{% url 'view_transactions' %}">🧾 View All Transactions</a></li>
+        <li><a href="#">🧮 Account Ledger</a> (Coming soon)</li>
+        <li><a href="#">💰 Opening Balances</a> (Coming soon)</li>
+    </ul>
+
+    <a href="{% url 'home' %}">← Back to Home</a>
+</body>
+</html>

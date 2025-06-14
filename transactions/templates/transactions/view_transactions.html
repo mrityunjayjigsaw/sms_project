@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Transactions</title>
+</head>
+<body>
+    <h2>All Transactions</h2>
+
+    <form method="get">
+        <label for="account">Account:</label>
+        <select name="account" id="account">
+            <option value="">All</option>
+            {% for account in accounts %}
+                <option value="{{ account.id }}" {% if account_filter == account.id|stringformat:"s" %}selected{% endif %}>{{ account.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="voucher_type">Voucher Type:</label>
+        <select name="voucher_type" id="voucher_type">
+            <option value="">All</option>
+            {% for vt, label in transactions.model.VOUCHER_TYPES %}
+                <option value="{{ vt }}" {% if voucher_type_filter == vt %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="start_date">From:</label>
+        <input type="date" name="start_date" value="{{ start_date }}">
+
+        <label for="end_date">To:</label>
+        <input type="date" name="end_date" value="{{ end_date }}">
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <hr>
+    <form method="get" action="{% url 'export_transactions_excel' %}">
+    <input type="hidden" name="account" value="{{ account_filter }}">
+    <input type="hidden" name="voucher_type" value="{{ voucher_type_filter }}">
+    <input type="hidden" name="start_date" value="{{ start_date }}">
+    <input type="hidden" name="end_date" value="{{ end_date }}">
+    <button type="submit">⬇️ Export to Excel</button>
+    </form>
+
+    {% if transactions %}
+        <table border="1" cellpadding="6" cellspacing="0">
+            <tr>
+                <th>Date</th>
+                <th>Debit Account</th>
+                <th>Credit Account</th>
+                <th>Amount (₹)</th>
+                <th>Voucher</th>
+                <th>Remarks</th>
+            </tr>
+            {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.date }}</td>
+                    <td>{{ txn.debit_account.name }}</td>
+                    <td>{{ txn.credit_account.name }}</td>
+                    <td>{{ txn.amount }}</td>
+                    <td>{{ txn.get_voucher_type_display }}</td>
+                    <td>{{ txn.remarks }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No transactions found for selected filters.</p>
+    {% endif %}
+
+    <br>
+    <a href="{% url 'transactions_home' %}">← Back to Transactions Home</a>
+</body>
+</html>

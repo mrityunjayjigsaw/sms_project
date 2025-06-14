@@ -1,6 +1,9 @@
 from django.db import models
 from admission.models import School 
 # Create your models here.
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class AccountHead(models.Model):
     ACCOUNT_TYPES = [
@@ -15,6 +18,7 @@ class AccountHead(models.Model):
     description = models.TextField(blank=True, null=True)
     opening_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
+    school = models.ForeignKey(School, on_delete=models.CASCADE) 
 
     def __str__(self):
         return f"{self.name} ({self.type})"
@@ -23,12 +27,20 @@ class AccountHead(models.Model):
  # Assuming each user is linked to a school
 
 class Transaction(models.Model):
+    VOUCHER_TYPES = [
+    ('payment', 'Payment'),
+    ('receipt', 'Receipt'),
+    ('journal', 'Journal'),
+    ('contra', 'Contra'),
+    ]
     date = models.DateField()
     debit_account = models.ForeignKey(AccountHead, on_delete=models.PROTECT, related_name='debit_transactions')
     credit_account = models.ForeignKey(AccountHead, on_delete=models.PROTECT, related_name='credit_transactions')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     remarks = models.TextField(blank=True, null=True)
-    school = models.ForeignKey(School, on_delete=models.CASCADE)  # Multi-school support
+    school = models.ForeignKey(School, on_delete=models.CASCADE, default="kalawati")  # Multi-school support
+    voucher_type = models.CharField(max_length=20, choices=VOUCHER_TYPES, blank=True, null=True)  # ✅ Add this
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
