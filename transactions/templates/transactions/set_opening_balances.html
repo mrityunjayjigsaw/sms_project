@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Opening Balances</title>
+</head>
+<body>
+    <h2>Set Opening Balances for All Accounts</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color:green;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr>
+                <th>Account Name</th>
+                <th>Type</th>
+                <th>Opening Balance (₹)</th>
+            </tr>
+            {% for form in formset %}
+                <tr>
+                    <td>{{ form.name.value }}</td>
+                    <td>{{ form.type.value|title }}</td>
+                    <td>{{ form.opening_balance }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <br>
+        <button type="submit">💾 Save Balances</button>
+    </form>
+
+    <br>
+    <a href="{% url 'transactions_home' %}">← Back to Transactions Home</a>
+</body>
+</html>

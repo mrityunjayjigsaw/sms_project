@@ -28,6 +28,8 @@ urlpatterns = [
     path('admission/', include('admission.urls')),
     path('fees/', include('fees.urls')),
     path('transactions/', include('transactions.urls')),
+    path('reports/', include('reports.urls')),
+
     path('', home, name='home'), 
 
 ]

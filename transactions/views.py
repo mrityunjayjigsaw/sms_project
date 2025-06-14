@@ -65,11 +65,11 @@ def view_transactions(request):
         )
     if voucher_type:
         transactions = transactions.filter(voucher_type=voucher_type)
-    parsed_start = parse_date(start_date)
+    parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
     if parsed_start:
         transactions = transactions.filter(date__gte=parsed_start)
 
-    parsed_end = parse_date(end_date)
+    parsed_end = parse_date(end_date) if isinstance(end_date, str) and end_date else None
     if parsed_end:
         transactions = transactions.filter(date__lte=parsed_end)
 
@@ -111,11 +111,11 @@ def export_transactions_excel(request):
     if voucher_type:
         transactions = transactions.filter(voucher_type=voucher_type)
         
-    parsed_start = parse_date(start_date)
+    parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
     if parsed_start:
         transactions = transactions.filter(date__gte=parsed_start)
 
-    parsed_end = parse_date(end_date)
+    parsed_end = parse_date(end_date) if isinstance(end_date, str) and end_date else None
     if parsed_end:
         transactions = transactions.filter(date__lte=parsed_end)
 
@@ -146,3 +146,171 @@ def export_transactions_excel(request):
     response['Content-Disposition'] = 'attachment; filename="transactions.xlsx"'
     wb.save(response)
     return response
+
+# transactions/views.py
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
+@login_required
+def ledger_view(request):
+    user_school = request.user.userprofile.school
+    accounts = AccountHead.objects.filter(school=user_school)
+
+    selected_account_id = request.GET.get('account')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    selected_account = None
+    ledger_entries = []
+    running_balance = Decimal('0.00')
+    parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
+    parsed_end = parse_date(end_date) if isinstance(end_date, str) and end_date else None
+
+
+    if selected_account_id and selected_account_id.isdigit():
+        selected_account = get_object_or_404(AccountHead, id=selected_account_id, school=user_school)
+
+        transactions = Transaction.objects.filter(
+            Q(debit_account=selected_account) | Q(credit_account=selected_account),
+            school=user_school
+        ).order_by('date', 'id')
+
+        if parsed_start:
+            transactions = transactions.filter(date__gte=parsed_start)
+        if parsed_end:
+            transactions = transactions.filter(date__lte=parsed_end)
+
+        # Initial opening balance
+        running_balance = selected_account.opening_balance or Decimal('0.00')
+
+        # Build ledger rows with running balance
+        for txn in transactions:
+            if txn.debit_account == selected_account:
+                debit = txn.amount
+                credit = Decimal('0.00')
+                running_balance += txn.amount
+            else:
+                debit = Decimal('0.00')
+                credit = txn.amount
+                running_balance -= txn.amount
+
+            ledger_entries.append({
+                'date': txn.date,
+                'debit': debit,
+                'credit': credit,
+                'remarks': txn.remarks,
+                'voucher_type': txn.get_voucher_type_display(),
+                'opposite_account': txn.credit_account.name if debit else txn.debit_account.name,
+                'running_balance': running_balance
+            })
+
+    return render(request, 'transactions/ledger_view.html', {
+        'accounts': accounts,
+        'selected_account': selected_account,
+        'ledger_entries': ledger_entries,
+        'start_date': start_date,
+        'end_date': end_date
+    })
+
+# transactions/views.py
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.utils import get_column_letter
+
+@login_required
+def export_ledger_excel(request):
+    user_school = request.user.userprofile.school
+    account_id = request.GET.get('account')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
+    parsed_end = parse_date(end_date) if isinstance(end_date, str) and end_date else None
+
+    if not account_id or not account_id.isdigit():
+        return HttpResponse("Invalid account selected.", status=400)
+
+    account = get_object_or_404(AccountHead, id=account_id, school=user_school)
+
+    transactions = Transaction.objects.filter(
+        Q(debit_account=account) | Q(credit_account=account),
+        school=user_school
+    ).order_by('date', 'id')
+
+    if parsed_start:
+        transactions = transactions.filter(date__gte=parsed_start)
+    if parsed_end:
+        transactions = transactions.filter(date__lte=parsed_end)
+
+    # Prepare workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Ledger"
+
+    ws.append([
+        'Date', 'Voucher Type', 'Opposite Account',
+        'Debit (₹)', 'Credit (₹)', 'Running Balance (₹)', 'Remarks'
+    ])
+
+    running_balance = account.opening_balance or Decimal('0.00')
+
+    for txn in transactions:
+        if txn.debit_account == account:
+            debit = txn.amount
+            credit = Decimal('0.00')
+            running_balance += debit
+            opposite = txn.credit_account.name
+        else:
+            debit = Decimal('0.00')
+            credit = txn.amount
+            running_balance -= credit
+            opposite = txn.debit_account.name
+
+        ws.append([
+            txn.date.strftime('%Y-%m-%d'),
+            txn.get_voucher_type_display(),
+            opposite,
+            float(debit),
+            float(credit),
+            float(running_balance),
+            txn.remarks or ''
+        ])
+
+    # Auto column width
+    for col in ws.columns:
+        max_length = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = max_length + 2
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"ledger_{account.name.replace(' ', '_')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+# transactions/views.py
+from django.forms import modelformset_factory
+
+@login_required
+def set_opening_balances(request):
+    user_school = request.user.userprofile.school
+    AccountHeadFormSet = modelformset_factory(
+        AccountHead,
+        fields=('name', 'type', 'opening_balance'),
+        extra=0
+    )
+
+    queryset = AccountHead.objects.filter(school=user_school).order_by('type', 'name')
+    formset = AccountHeadFormSet(request.POST or None, queryset=queryset)
+
+    if request.method == 'POST' and formset.is_valid():
+        formset.save()
+        messages.success(request, "Opening balances updated successfully.")
+        return redirect('set_opening_balances')
+
+    return render(request, 'transactions/set_opening_balances.html', {
+        'formset': formset,
+    })

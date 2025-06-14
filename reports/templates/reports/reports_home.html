@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports Dashboard</title>
+</head>
+<body>
+    <h2>Reports Center</h2>
+
+    <h3>🎓 Admission Reports</h3>
+    <ul>
+        <li><a href="{% url 'student_list_report' %}">Student List Report</a></li>
+        <li><em>Search Student, Admission Register – Coming Soon</em></li>
+    </ul>
+
+    <h3>💰 Fee Reports</h3>
+    <ul>
+        <li><a href="{% url 'fee_defaulter_report' %}">Fee Defaulter Report</a></li>
+        <li><em>Student Fee History</em> – Coming Soon</li>
+        <li><em>Class-wise Collection, Fee Head Summary</em> – Coming Soon</li>
+    </ul>
+
+    <h3>📒 Transaction Reports</h3>
+    <ul>
+        <li><em>Account Ledger</em> – Already in transactions app</li>
+        <li><em>Trial Balance, Balance Sheet</em> – Coming Soon</li>
+    </ul>
+
+    <br>
+    <a href="{% url 'home' %}">← Back to Home</a>
+</body>
+</html>

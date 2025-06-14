@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Account Ledger</title>
+</head>
+<body>
+    <h2>Account Ledger</h2>
+
+    <form method="get">
+        <label for="account">Account:</label>
+        <select name="account" required>
+            <option value="">Select Account</option>
+            {% for account in accounts %}
+                <option value="{{ account.id }}" {% if selected_account and selected_account.id == account.id %}selected{% endif %}>{{ account.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>From:</label>
+        <input type="date" name="start_date" value="{{ start_date }}">
+        <label>To:</label>
+        <input type="date" name="end_date" value="{{ end_date }}">
+
+        <button type="submit">View Ledger</button>
+    </form>
+
+    <hr>
+    {% if selected_account %}
+    <form method="get" action="{% url 'export_ledger_excel' %}">
+        <input type="hidden" name="account" value="{{ selected_account.id }}">
+        <input type="hidden" name="start_date" value="{{ start_date }}">
+        <input type="hidden" name="end_date" value="{{ end_date }}">
+        <button type="submit">⬇️ Export Ledger to Excel</button>
+    </form>
+    {% endif %}
+
+
+    {% if selected_account %}
+        <h3>Ledger for: {{ selected_account.name }} (Opening: ₹{{ selected_account.opening_balance }})</h3>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr>
+                <th>Date</th>
+                <th>Voucher Type</th>
+                <th>Opposite Account</th>
+                <th>Debit (₹)</th>
+                <th>Credit (₹)</th>
+                <th>Running Balance (₹)</th>
+                <th>Remarks</th>
+            </tr>
+            {% for entry in ledger_entries %}
+            <tr>
+                <td>{{ entry.date }}</td>
+                <td>{{ entry.voucher_type }}</td>
+                <td>{{ entry.opposite_account }}</td>
+                <td>{{ entry.debit }}</td>
+                <td>{{ entry.credit }}</td>
+                <td>{{ entry.running_balance }}</td>
+                <td>{{ entry.remarks }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    <br>
+    <a href="{% url 'transactions_home' %}">← Back to Transactions Home</a>
+</body>
+</html>

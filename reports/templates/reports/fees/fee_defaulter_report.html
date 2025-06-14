@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fee Defaulter Report</title>
+</head>
+<body>
+    <h2>Fee Defaulter Report</h2>
+
+    <form method="get">
+        <label>Academic Year:</label>
+        <select name="academic_year">
+            <option value="">All</option>
+            {% for year in academic_years %}
+                <option value="{{ year.id }}" {% if selected_year == year.id|stringformat:"s" %}selected{% endif %}>
+                    {{ year.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Class:</label>
+        <select name="class_id">
+            <option value="">All</option>
+            {% for cls in classes %}
+                <option value="{{ cls.id }}" {% if selected_class == cls.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cls.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Month:</label>
+        <select name="month">
+            <option value="">All</option>
+            {% for i in 1|add:"0"|make_list %}
+                <option value="{{ i|stringformat:"02d" }}" {% if selected_month == i|stringformat:"02d" %}selected{% endif %}>
+                    {{ i|stringformat:"02d"|date:"F" }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    {% if dues %}
+        <br>
+        <form method="get" action="{% url 'export_fee_defaulter_report' %}">
+            <input type="hidden" name="academic_year" value="{{ selected_year }}">
+            <input type="hidden" name="class_id" value="{{ selected_class }}">
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <button type="submit">⬇ Export to Excel</button>
+        </form>
+        <button onclick="window.print()">🖨 Print</button>
+
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr>
+                <th>Student</th>
+                <th>Class</th>
+                <th>Month</th>
+                <th>Fee Type</th>
+                <th>Due (₹)</th>
+                <th>Paid (₹)</th>
+                <th>Balance (₹)</th>
+            </tr>
+            {% for d in dues %}
+                <tr>
+                    <td>{{ d.student.full_name }}</td>
+                    <td>{{ d.class }}</td>
+                    <td>{{ d.month }}</td>
+                    <td>{{ d.fee_type }}</td>
+                    <td>{{ d.due }}</td>
+                    <td>{{ d.paid }}</td>
+                    <td>{{ d.balance }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No pending dues found for selected filters.</p>
+    {% endif %}
+
+    <br>
+    <a href="{% url 'reports_home' %}">← Back to Reports Home</a>
+</body>
+</html>
