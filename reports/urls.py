@@ -10,6 +10,10 @@ urlpatterns = [
     # reports/urls.py
     path('fees/defaulters/', views.fee_defaulter_report, name='fee_defaulter_report'),
     path('fees/defaulters/export/', views.export_fee_defaulter_report, name='export_fee_defaulter_report'),
+    # reports/urls.py
+    path('fees/history/', views.student_fee_history_report, name='student_fee_history_report'),
+    path('fees/history/export/', views.export_student_fee_history, name='export_student_fee_history'),
+
     
 
 ]

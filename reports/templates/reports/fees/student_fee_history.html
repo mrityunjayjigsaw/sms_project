@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Fee History</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #eee;
+        }
+
+        .totals {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Student Fee History Report</h2>
+
+    <form method="get">
+        {{ form.as_p }}
+        <button type="submit">View History</button>
+    </form>
+
+    {% if history %}
+        <br>
+        <h4>Student: {{ student.full_name }}</h4>
+
+        <form method="get" action="{% url 'export_student_fee_history' %}">
+            <input type="hidden" name="student" value="{{ student.id }}">
+            {% if form.cleaned_data.academic_year %}
+            <input type="hidden" name="academic_year" value="{{ form.cleaned_data.academic_year.id }}">
+            {% endif %}
+            <button type="submit">⬇ Export to Excel</button>
+        </form>
+
+        <button onclick="window.print()">🖨 Print</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Fee Type</th>
+                    <th>Amount Due (₹)</th>
+                    <th>Amount Paid (₹)</th>
+                    <th>Balance (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in history %}
+                <tr>
+                    <td>{{ row.month }}</td>
+                    <td>{{ row.fee_type }}</td>
+                    <td>{{ row.due }}</td>
+                    <td>{{ row.paid }}</td>
+                    <td>{{ row.balance }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <p>Total Due: ₹{{ total_due }}</p>
+            <p>Total Paid: ₹{{ total_paid }}</p>
+            <p>Total Balance: ₹{{ total_due|floatformat:2|add:"-total_paid"|floatformat:2 }}</p>
+        </div>
+    {% endif %}
+
+    <br>
+    <a href="{% url 'reports_home' %}">← Back to Reports Home</a>
+</body>
+</html>

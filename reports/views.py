@@ -221,3 +221,154 @@ def export_fee_defaulter_report(request):
     return response
 
 
+# reports/views.py
+from reports.forms import StudentFeeHistoryForm
+from fees.models import StudentFeeDue, StudentFeePaymentDetail
+from django.db.models import Sum
+from collections import defaultdict
+
+@login_required
+def student_fee_history_report(request):
+    school = request.user.userprofile.school
+    form = StudentFeeHistoryForm(request.GET or None, school=school)
+    history = []
+    total_due = 0
+    total_paid = 0
+
+    if form.is_valid():
+        student = form.cleaned_data['student']
+        academic_year = form.cleaned_data['academic_year']
+
+        dues = StudentFeeDue.objects.filter(student=student)
+        if academic_year:
+            dues = dues.filter(student__academic_records__academic_year=academic_year)
+
+        payments = StudentFeePaymentDetail.objects.filter(payment__student=student)
+        if academic_year:
+            payments = payments.filter(payment__student__academic_records__academic_year=academic_year)
+
+        # Group dues by (month, fee_type)
+        due_dict = defaultdict(lambda: 0)
+        for d in dues:
+            key = (d.month, d.fee_type.name)
+            due_dict[key] += float(d.amount_due)
+
+        # Group payments by (month, fee_type)
+        paid_dict = defaultdict(lambda: 0)
+        for p in payments:
+            key = (p.payment.month, p.fee_type.name)
+            paid_dict[key] += float(p.amount_paid)
+
+        all_keys = sorted(set(due_dict.keys()) | set(paid_dict.keys()))
+
+        for key in all_keys:
+            due = due_dict.get(key, 0)
+            paid = paid_dict.get(key, 0)
+            balance = due - paid
+            total_due += due
+            total_paid += paid
+
+            history.append({
+                'month': key[0].strftime('%B %Y'),
+                'fee_type': key[1],
+                'due': due,
+                'paid': paid,
+                'balance': balance
+            })
+
+    return render(request, 'reports/fees/student_fee_history.html', {
+        'form': form,
+        'history': history,
+        'total_due': total_due,
+        'total_paid': total_paid,
+        'student': form.cleaned_data['student'] if form.is_valid() else None,
+    })
+
+# reports/views.py
+import openpyxl
+from django.http import HttpResponse
+from collections import defaultdict
+from fees.models import StudentFeeDue, StudentFeePaymentDetail
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def export_student_fee_history(request):
+    school = request.user.userprofile.school
+    student_id = request.GET.get('student')
+    academic_year_id = request.GET.get('academic_year')
+
+    try:
+        student = StudentAdmission.objects.get(id=student_id, school=school)
+    except StudentAdmission.DoesNotExist:
+        return HttpResponse("Student not found.", status=404)
+
+    academic_year = None
+    if academic_year_id:
+        try:
+            academic_year = AcademicYear.objects.get(id=academic_year_id, school=school)
+        except AcademicYear.DoesNotExist:
+            pass  # Ignore invalid year
+
+    dues = StudentFeeDue.objects.filter(student=student)
+    if academic_year:
+        dues = dues.filter(student__academic_records__academic_year=academic_year)
+
+    payments = StudentFeePaymentDetail.objects.filter(payment__student=student)
+    if academic_year:
+        payments = payments.filter(payment__student__academic_records__academic_year=academic_year)
+
+    # Group dues by (month, fee_type)
+    due_dict = defaultdict(float)
+    for d in dues:
+        key = (d.month, d.fee_type.name)
+        due_dict[key] += float(d.amount_due)
+
+    # Group payments by (month, fee_type)
+    paid_dict = defaultdict(float)
+    for p in payments:
+        key = (p.payment.month, p.fee_type.name)
+        paid_dict[key] += float(p.amount_paid)
+
+    all_keys = sorted(set(due_dict.keys()) | set(paid_dict.keys()))
+
+    # Create workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Fee History"
+
+    ws.append(['Student Name', student.full_name])
+    ws.append(['Academic Year', academic_year.name if academic_year else 'All Years'])
+    ws.append([])
+    ws.append(['Month', 'Fee Type', 'Amount Due (₹)', 'Amount Paid (₹)', 'Balance (₹)'])
+
+    total_due = total_paid = 0
+
+    for key in all_keys:
+        month, fee_type = key
+        due = due_dict.get(key, 0)
+        paid = paid_dict.get(key, 0)
+        balance = due - paid
+        total_due += due
+        total_paid += paid
+
+        ws.append([
+            month.strftime('%B %Y'),
+            fee_type,
+            round(due, 2),
+            round(paid, 2),
+            round(balance, 2)
+        ])
+
+    # Totals
+    ws.append([])
+    ws.append(['Total Due', total_due])
+    ws.append(['Total Paid', total_paid])
+    ws.append(['Total Balance', total_due - total_paid])
+
+    # Download response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"{student.full_name.replace(' ', '_')}_fee_history.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
