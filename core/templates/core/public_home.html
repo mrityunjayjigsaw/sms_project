@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><title>Welcome to SMS</title></head>
+<body>
+    {% if messages %}
+        {% for message in messages %}
+          <p style="color: green;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    <h1>Welcome to Our School Management Web App</h1>
+    <p>Features: Admission, Fees, Transactions, Reports, and more!</p>
+    <a href="{% url 'school_signup' %}">Sign Up Your School</a> |
+    <a href="{% url 'login' %}">Login</a>
+    <a href="admin/">Admin Dashboard(Only For Admin)</a>
+</body>
+</html>

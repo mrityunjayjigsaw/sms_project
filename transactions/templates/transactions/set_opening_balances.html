@@ -4,6 +4,8 @@
     <title>Set Opening Balances</title>
 </head>
 <body>
+    <a href="{% url 'home'%}"><button>Home</button></a>
+    <a href="{% url 'transactions_home'%}"><button>Back</button></a>
     <h2>Set Opening Balances for All Accounts</h2>
 
     {% if messages %}
@@ -33,6 +35,5 @@
     </form>
 
     <br>
-    <a href="{% url 'transactions_home' %}">← Back to Transactions Home</a>
 </body>
 </html>

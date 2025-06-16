@@ -5,7 +5,7 @@ from .models import UserProfile, School
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    if created:
+    if created and not instance.is_superuser:
         # You can assign a default school if needed, or leave it blank
         school = School.objects.first()
         if school:

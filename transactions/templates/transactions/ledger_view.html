@@ -4,6 +4,8 @@
     <title>Account Ledger</title>
 </head>
 <body>
+    <a href="{% url 'home'%}"><button>Home</button></a>
+    <a href="{% url 'transactions_home'%}"><button>Back</button></a>
     <h2>Account Ledger</h2>
 
     <form method="get">
@@ -61,6 +63,5 @@
     {% endif %}
 
     <br>
-    <a href="{% url 'transactions_home' %}">← Back to Transactions Home</a>
 </body>
 </html>

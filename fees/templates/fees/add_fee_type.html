@@ -4,6 +4,8 @@
     <title>Add Fee Type</title>
 </head>
 <body>
+    <a href="{% url 'home'%}"><button>Home</button></a>
+    <a href="{% url 'fees_home'%}"><button>Back</button></a>
     <h2>Add Fee Type</h2>
     <form method="post">
         {% csrf_token %}

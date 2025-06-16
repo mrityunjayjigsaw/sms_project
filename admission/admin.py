@@ -1,5 +1,6 @@
 from django.contrib import admin
 from core.models import School, UserProfile
+from .models import AcademicYear, Class
 
 @admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
@@ -9,7 +10,7 @@ class SchoolAdmin(admin.ModelAdmin):
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'school', 'is_admin']
     
-from .models import AcademicYear, Class
+
 
 @admin.register(AcademicYear)
 class AcademicYearAdmin(admin.ModelAdmin):

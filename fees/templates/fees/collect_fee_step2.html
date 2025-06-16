@@ -1,3 +1,7 @@
+<a href="{% url 'home'%}"><button>Home</button></a>
+<a href="{% url 'fees_home'%}"><button>Back To Fees</button></a>
+
+
 <h2>💳 Collect Fees: {{ student.full_name }}</h2>
 <p><strong>Month:</strong> {{ month|date:"F Y" }}</p>
 <p><strong>Advance Balance:</strong> ₹{{ advance }}</p>

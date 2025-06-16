@@ -1,8 +1,11 @@
-
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from .models import *
+import os
 from django.shortcuts import render, redirect,get_object_or_404
 from .forms import *
 from admission.models import *
-from .models import *
 from transactions.models import *
 from django.db import transaction
 from django.db.models import Q, Sum
@@ -352,11 +355,6 @@ def collect_fee_step2(request, student_id, month_str):
     })
 
 
-from django.http import HttpResponse
-from django.template.loader import get_template
-from xhtml2pdf import pisa
-from .models import StudentFeePayment
-import os
 
 def download_receipt(request, payment_id):
     payment = StudentFeePayment.objects.select_related('student').prefetch_related('details__fee_type').get(id=payment_id)

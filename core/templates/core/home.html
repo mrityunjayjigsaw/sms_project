@@ -4,12 +4,20 @@
     <title>School Management System - Home</title>
 </head>
 <body>
+    {% if messages %}
+    <ul>
+      {% for message in messages %}
+        <li style="color:green">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
     <h1>Welcome {{ request.user.username }}</h1>
 
     <p>Select a module:</p>
 
     <ul>
-        <li><a href="/admin">🎓 Admin</a></li>
+        {% comment %} <li><a href="/admin">🎓 Admin</a></li> {% endcomment %}
         <li><a href="{% url 'admission_home' %}">📘 Admission</a></li>
         <li><a href="{% url 'fees_home'%}">💸 Fees </a></li>
         <li><a href="{% url 'transactions_home'%}">📊 Transactions </a></li>
