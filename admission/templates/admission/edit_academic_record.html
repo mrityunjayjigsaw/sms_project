@@ -1,0 +1,16 @@
+<a href="{% url 'home' %}"><button>Home</button></a>
+<a href="{% url 'admission_home' %}"><button>Back</button></a>
+
+<h2>Edit Academic Record for {{ student.full_name }}</h2>
+
+{% if academic_record %}
+    <p><strong>Current Record:</strong> {{ academic_record.academic_year.name }} - {{ academic_record.class_enrolled.name }}</p>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+</form>
+
+<a href="{% url 'student_list' %}">← Back to Student List</a>

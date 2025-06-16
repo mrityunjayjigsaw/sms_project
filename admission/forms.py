@@ -18,6 +18,7 @@ class StudentAdmissionForm(forms.ModelForm):
         required=False,
         label="Section"
     )
+    # default="A" and required=True
     class Meta:
         model = StudentAdmission
         fields = [

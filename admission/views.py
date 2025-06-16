@@ -63,12 +63,12 @@ def student_list(request):
         students = StudentAdmission.objects.filter(
         school=school,
         is_active=True
-    )
+        )
     
     # Filters
     class_id = request.GET.get('class_id')
     year_id = request.GET.get('year_id')
-    name_query = request.GET.get('name')
+    name_query = request.GET.get('name',"")
 
     academic_records = StudentAcademicRecord.objects.filter(school=school)
 
@@ -170,27 +170,33 @@ def delete_year(request, year_id):
     return render(request, 'admission/delete_confirm.html', {'object': year, 'type': 'Academic Year'})
 
 @login_required
-def assign_class_year(request, student_id):
-    student = StudentAdmission.objects.get(id=student_id)
-    school = request.user.userprofile.school
+def edit_student_academic_record(request, student_id):
+    """
+    View to edit the latest academic record of a student.
+    Only used for admin corrections.
+    """
+    student = get_object_or_404(StudentAdmission, id=student_id)
+    academic_record = student.academic_records.last()
 
-    # Check if student already has an academic record for this year (optional)
-    existing_record = StudentAcademicRecord.objects.filter(student=student, school=school).last()
+    if not academic_record:
+        return render(request, "admission/no_record_found.html", {"student": student})
 
-    form = StudentAcademicRecordForm(request.POST or None)
+    form = StudentAcademicRecordForm(request.POST or None, instance=academic_record)
 
     if request.method == 'POST' and form.is_valid():
-        record = form.save(commit=False)
-        record.student = student
-        record.school = school
-        record.save()
+        updated_record = form.save(commit=False)
+        updated_record.student = student
+        updated_record.school = academic_record.school  # keep original school
+        updated_record.save()
         return redirect('student_list')
 
-    return render(request, 'admission/assign_class_year.html', {
+    return render(request, 'admission/edit_academic_record.html', {
         'form': form,
         'student': student,
-        'existing_record': existing_record
+        'academic_record': academic_record,
     })
+
+
 from django.shortcuts import get_object_or_404 
 @login_required
 def view_academic_records(request, student_id):

@@ -53,10 +53,10 @@
             <td>{{ student.contact_number }}</td>
             <td>{{ student.email }}</td>
             <td>
-                <a href="{% url 'assign_class_year' student.id %}">Assign Class/Year</a>
+                <a href="{% url 'edit_student_academic_record' student.id %}">Edit Class/Year</a>
             </td>
             <td>
-                <a href="{% url 'view_academic_records' student.id %}">View Records</a>
+                <a href="{% url 'view_academic_records' student.id %}">Academic Records</a>
             </td>
             <td>
                 <a href="{% url 'student_profile' student.id %}">Profile</a>

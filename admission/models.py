@@ -75,6 +75,7 @@ class StudentAdmission(models.Model):
 
 
 class StudentAcademicRecord(models.Model):
+    # Each row = One student in one academic year, same student can have multiple records for different years
     student = models.ForeignKey(StudentAdmission, on_delete=models.CASCADE, related_name='academic_records')
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     class_enrolled = models.ForeignKey(Class, on_delete=models.CASCADE)

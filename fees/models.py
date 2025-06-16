@@ -11,7 +11,7 @@ class FeeType(models.Model):
         AccountHead,
         on_delete=models.PROTECT,
         related_name='fee_types',
-        help_text="Accounting ledger this fee type is linked to"
+        help_text=""
     )
 
     def __str__(self):
