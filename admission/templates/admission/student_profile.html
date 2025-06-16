@@ -1,3 +1,8 @@
+{% if request.GET %}
+<a href="{% url 'student_list' %}?{{ request.GET.urlencode }}"><button>← Back to Student List</button></a>
+{% else %}
+<a href="{% url 'student_list' %}"><button>← Back to Student List</button></a>
+{% endif %}
 <h2>Student Profile: {{ student.full_name }}</h2>
 
 <h3>👤 Personal Information</h3>
@@ -38,13 +43,6 @@
     <tr><td colspan="6">No academic records found.</td></tr>
     {% endfor %}
 </table>
-
-<h4>🛠 Actions</h4>
-<ul>
-    <li><a href="{% url 'edit_student_academic_record' student.id %}">✏️ Edit Class/Year</a></li>
-    <li><a href="{% url 'edit_student' student.id %}">✏️ Edit Student Info</a></li>
-    <li><a href="{% url 'student_list' %}">← Back to Student List</a></li>
-</ul>
 
 {% if student.is_active %}
     <form method="post" action="{% url 'soft_delete_student' student.id %}">

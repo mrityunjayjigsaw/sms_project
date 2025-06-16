@@ -1,5 +1,10 @@
 <a href="{% url 'home' %}"><button>Home</button></a>
-<a href="{% url 'admission_home' %}"><button>Back</button></a>
+{% if request.GET %}
+    <a href="{% url 'student_list' %}?{{ request.GET.urlencode }}"><button>← Back to Student List</button></a>
+{% else %}
+    <a href="{% url 'student_list' %}"><button>← Back to Student List</button></a>
+{% endif %}
+{% comment %} This is to retain filter that were chosed in previous page {% endcomment %}
 
 <h2>Edit Academic Record for {{ student.full_name }}</h2>
 
@@ -13,4 +18,3 @@
     <button type="submit">Save Changes</button>
 </form>
 
-<a href="{% url 'student_list' %}">← Back to Student List</a>

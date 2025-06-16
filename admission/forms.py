@@ -15,10 +15,11 @@ class StudentAdmissionForm(forms.ModelForm):
     )
     section = forms.CharField(
         max_length=10,
-        required=False,
-        label="Section"
+        required=True,
+        label="Section",
+        initial='A',# default="A" 
     )
-    # default="A" and required=True
+    
     class Meta:
         model = StudentAdmission
         fields = [
