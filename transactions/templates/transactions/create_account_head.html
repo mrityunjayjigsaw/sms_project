@@ -1,0 +1,11 @@
+<!-- templates/transactions/create_account_head.html -->
+<a href="{% url 'home'%}"><button>Home</button></a>
+<a href="{% url 'transactions_home'%}"><button>Back</button></a>
+<h2>Create New Account Head</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create</button>
+</form>
+
+<a href="{% url 'home' %}">← Back to Home</a>

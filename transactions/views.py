@@ -1,10 +1,20 @@
 # transactions/views.py
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .forms import ManualTransactionForm
-from .models import Transaction
+from .forms import *
+from .models import *
 from django.contrib.auth.decorators import login_required
 from admission.models import School 
+from django.db.models import Q
+from django.utils.dateparse import parse_date
+import openpyxl
+from django.http import HttpResponse
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.utils import get_column_letter
+from django.forms import modelformset_factory
 
 @login_required
 def transactions_home(request):
@@ -40,13 +50,6 @@ def add_manual_transaction(request):
         return redirect('add_manual_transaction')
 
     return render(request, 'transactions/add_manual_transaction.html', {'form': form})
-
-
-# transactions/views.py
-from django.db.models import Q
-from django.utils.dateparse import parse_date
-from .models import Transaction, AccountHead
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def view_transactions(request):
@@ -85,13 +88,6 @@ def view_transactions(request):
         'end_date': end_date,
     })
 
-
-# transactions/views.py
-import openpyxl
-from django.http import HttpResponse
-from django.db.models import Q
-from django.utils.dateparse import parse_date
-from .models import Transaction, AccountHead
 
 @login_required
 def export_transactions_excel(request):
@@ -147,9 +143,6 @@ def export_transactions_excel(request):
     wb.save(response)
     return response
 
-# transactions/views.py
-from decimal import Decimal
-from django.shortcuts import get_object_or_404
 @login_required
 def ledger_view(request):
     user_school = request.user.userprofile.school
@@ -210,11 +203,6 @@ def ledger_view(request):
         'start_date': start_date,
         'end_date': end_date
     })
-
-# transactions/views.py
-from django.http import HttpResponse
-import openpyxl
-from openpyxl.utils import get_column_letter
 
 @login_required
 def export_ledger_excel(request):
@@ -291,9 +279,6 @@ def export_ledger_excel(request):
     return response
 
 
-# transactions/views.py
-from django.forms import modelformset_factory
-
 @login_required
 def set_opening_balances(request):
     user_school = request.user.userprofile.school
@@ -314,3 +299,59 @@ def set_opening_balances(request):
     return render(request, 'transactions/set_opening_balances.html', {
         'formset': formset,
     })
+
+
+@login_required
+def create_account_head(request):
+    school = request.user.userprofile.school
+    form = AccountHeadForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        account_head = form.save(commit=False)
+        account_head.school = school
+        account_head.is_active = True
+        account_head.save()
+        return redirect('transactions_home')  # redirect to a listing page or dashboard
+
+    return render(request, 'transactions/create_account_head.html', {'form': form})
+
+@login_required
+def list_account_heads(request):
+    school = request.user.userprofile.school
+    heads = AccountHead.objects.filter(school=school).order_by('type', 'name')
+    return render(request, 'transactions/account_head_list.html', {'heads': heads})
+
+# transactions/views.py
+# import pandas as pd
+# from io import BytesIO
+# from django.http import HttpResponse
+# from .models import AccountHead
+
+# @login_required
+# def export_account_heads_excel(request):
+#     school = request.user.userprofile.school
+#     heads = AccountHead.objects.filter(school=school)
+
+#     data = []
+#     for h in heads:
+#         data.append({
+#             'Name': h.name,
+#             'Type': h.get_type_display(),
+#             'Description': h.description,
+#             'Opening Balance': float(h.opening_balance),
+#             'Status': 'Active' if h.is_active else 'Inactive',
+#         })
+
+#     df = pd.DataFrame(data)
+
+#     output = BytesIO()
+#     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+#         df.to_excel(writer, index=False, sheet_name='AccountHeads')
+#     output.seek(0)
+
+#     response = HttpResponse(
+#         output,
+#         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#     )
+#     response['Content-Disposition'] = 'attachment; filename=account_heads.xlsx'
+#     return response
