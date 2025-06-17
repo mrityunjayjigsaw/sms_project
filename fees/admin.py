@@ -6,7 +6,7 @@ from .models import StudentAdvanceBalance
 
 @admin.register(FeeType)
 class FeeTypeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'is_recurring', 'account_head']
+    list_display = ['name', 'account_head']
     search_fields = ['name']
 
 

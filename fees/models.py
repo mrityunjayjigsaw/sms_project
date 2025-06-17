@@ -6,7 +6,7 @@ from admission.models import StudentAdmission
 class FeeType(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
-    is_recurring = models.BooleanField(default=True, help_text="Checked = monthly recurring")
+    # is_recurring = models.BooleanField(default=True, help_text="Checked = monthly recurring")
     account_head = models.ForeignKey(
         AccountHead,
         on_delete=models.PROTECT,

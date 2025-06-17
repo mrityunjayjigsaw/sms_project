@@ -1,6 +1,4 @@
 from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, redirect
 from .forms import *
 from .models import StudentAdmission, StudentAcademicRecord, Class, AcademicYear
@@ -10,11 +8,21 @@ from django.utils.timezone import now
 from django.http import FileResponse
 import os
 from django.conf import settings
+from django.shortcuts import get_object_or_404 
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from openpyxl import load_workbook
+from django.utils.dateparse import parse_date
+from dateutil.parser import parse as smart_date_parse
+from datetime import datetime, date
+from django.http import HttpResponse
+from docxtpl import DocxTemplate
 
 @login_required
 def admission_home(request):
     return render(request, 'admission/admission_home.html')
-
 
 @login_required
 def admit_student(request):
@@ -68,7 +76,6 @@ def admit_student(request):
         form = StudentAdmissionForm(initial={'admission_no': next_adm_no})
 
     return render(request, 'admission/admit_student.html', {'form': form})
-
 
 @login_required
 def student_list(request):
@@ -124,7 +131,6 @@ def add_class(request):
         return redirect('admission_home')
     return render(request, 'admission/add_class.html', {'form': form})
 
-
 @login_required
 def add_academic_year(request):
     form = AcademicYearForm(request.POST or None)
@@ -140,7 +146,6 @@ def class_list(request):
     school = request.user.userprofile.school
     classes = Class.objects.filter(school=school)
     return render(request, 'admission/class_list.html', {'classes': classes})
-
 
 @login_required
 def academic_year_list(request):
@@ -213,8 +218,6 @@ def edit_student_academic_record(request, student_id):
         'academic_record': academic_record,
     })
 
-
-from django.shortcuts import get_object_or_404 
 @login_required
 def view_academic_records(request, student_id):
     student = get_object_or_404(StudentAdmission, id=student_id)
@@ -234,8 +237,6 @@ def student_profile(request, student_id):
         'student': student,
         'records': records
     })
-
-# admission/views.py
 
 @login_required
 def edit_student(request, student_id):
@@ -262,9 +263,6 @@ def edit_student(request, student_id):
         'student': student
     })
 
-
-
-from django.http import HttpResponseForbidden
 @login_required
 def soft_delete_student(request, student_id):
     student = get_object_or_404(StudentAdmission, id=student_id)
@@ -275,18 +273,6 @@ def soft_delete_student(request, student_id):
         student.is_active = False
         student.save()
         return redirect('student_list')
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from openpyxl import load_workbook
-from django.utils.dateparse import parse_date
-from dateutil.parser import parse as smart_date_parse
-from datetime import datetime, date
-
-from .models import StudentAdmission, StudentAcademicRecord, AcademicYear, Class
-
 
 @login_required
 def import_students_excel(request):
@@ -403,8 +389,45 @@ def import_students_excel(request):
 
     return render(request, 'admission/import_students_excel.html')
 
-
 @login_required
 def download_excel_template(request):
     file_path = os.path.join(settings.BASE_DIR, 'static/admission/student_import_template.xlsx')
     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='student_template.xlsx')
+
+@login_required
+def generate_admission_form(request, student_id):
+    student = StudentAdmission.objects.get(id=student_id)
+    academic_record = StudentAcademicRecord.objects.filter(student=student).order_by('-academic_year__start_date').first()
+    
+    template_path = os.path.join('static', 'admission', 'admission_template.docx')
+    doc = DocxTemplate(template_path)
+
+    context = {
+        'full_name': student.full_name,
+        'ssr_no': student.ssr_no,
+        'academic_year': academic_record.academic_year.name if academic_record else '',
+        'gender': student.gender,
+        'date_of_birth': student.date_of_birth.strftime('%d %B %Y') if student.date_of_birth else '',
+        'admission_date': student.admission_date.strftime('%d %B %Y') if student.admission_date else '',
+        'admission_no': student.admission_no,
+        'father_name': student.father_name,
+        'mother_name': student.mother_name, 
+        'father_profession': student.father_profession,
+        'aadhar_no': student.aadhar_no,
+        'mobile_no': student.mobile_no,
+        'whatsapp_no': student.whatsapp_no,
+        'religion': student.religion,
+        'category': student.category,
+        'address': student.address if student.address else '',
+        'class_enrolled': academic_record.class_enrolled.name if academic_record else '',
+        'section': academic_record.section if academic_record and academic_record.section else '',
+    }
+
+    doc.render(context)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    response['Content-Disposition'] = f'attachment; filename=admission_form_{student.admission_no}.docx'
+    doc.save(response)
+    return response
+
+

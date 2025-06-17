@@ -5,7 +5,7 @@ from admission.models import AcademicYear, Class, StudentAdmission
 class FeeTypeForm(forms.ModelForm):
     class Meta:
         model = FeeType
-        fields = ['name', 'description', 'is_recurring', 'account_head']
+        fields = ['name', 'description', 'account_head']
 
 
 class BulkFeePlanForm(forms.Form):

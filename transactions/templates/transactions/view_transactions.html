@@ -52,6 +52,8 @@
                 <th>Amount (₹)</th>
                 <th>Voucher</th>
                 <th>Remarks</th>
+                <th>Created By</th>
+                <th>Created At</th>
             </tr>
             {% for txn in transactions %}
                 <tr>
@@ -61,6 +63,8 @@
                     <td>{{ txn.amount }}</td>
                     <td>{{ txn.get_voucher_type_display }}</td>
                     <td>{{ txn.remarks }}</td>
+                    <td>{{ txn.created_by.username }}</td>
+                    <td>{{ txn.created_at }}</td>
                 </tr>
             {% endfor %}
         </table>

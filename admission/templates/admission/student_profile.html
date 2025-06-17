@@ -53,5 +53,8 @@
     <p><strong>Status:</strong> Left School</p>
 {% endif %}
 <a href="{% url 'edit_student' student.id %}">Edit Student Info</a>
+<a href="{% url 'generate_admission_form' student.id %}">
+    <button>Download Admission Form</button>
+</a>
 
 

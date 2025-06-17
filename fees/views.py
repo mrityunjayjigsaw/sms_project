@@ -169,7 +169,10 @@ def assign_fees_bulk(request):
                             credit_account=fee_type.account_head,
                             amount=amount,
                             remarks=f"Posted fee for {student.full_name} - {fee_type.name} - {month_date.strftime('%B %Y')}",
-                            school=student.school
+                            school=student.school,
+                            voucher_type='journal',
+                            created_by=request.user,
+                            created_at=datetime.now()    
                         )
         return redirect('fees_home')
 
@@ -323,10 +326,13 @@ def collect_fee_step2(request, student_id, month_str):
                     Transaction.objects.create(
                         date=date.today(),
                         debit_account=AccountHead.objects.get(name="CASH" if payment_mode == "CASH" else "BANK"),
-                        credit_account=due.fee_type.account_head,
+                        credit_account=AccountHead.objects.get(name="STUDENT_DUES"),
                         amount=Decimal(alloc),
                         remarks=f"{student.full_name} - {due.fee_type.name} ({due.month.strftime('%B %Y')})",
-                        school=student.school
+                        school=student.school,
+                        voucher_type='receipt',
+                        created_by=request.user,
+                        created_at=datetime.now()
                     )
 
                     total_allocated += Decimal(alloc)
