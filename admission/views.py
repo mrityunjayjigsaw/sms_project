@@ -2,12 +2,14 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect
-from .forms import StudentAdmissionForm, ClassForm, AcademicYearForm, StudentAcademicRecordForm
+from .forms import *
 from .models import StudentAdmission, StudentAcademicRecord, Class, AcademicYear
 from core.models import UserProfile
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
-
+from django.http import FileResponse
+import os
+from django.conf import settings
 
 @login_required
 def admission_home(request):
@@ -18,26 +20,40 @@ def admission_home(request):
 def admit_student(request):
     school = request.user.userprofile.school
 
-    # Generate next numeric admission_no
+    # Generate next admission number
     last_student = StudentAdmission.objects.filter(school=school).order_by('-id').first()
     if last_student and last_student.admission_no.isdigit():
         last_adm_no = int(last_student.admission_no)
         next_adm_no = str(last_adm_no + 1)
     else:
-        next_adm_no = '1001'  # Start from 1001 if no student or non-numeric
+        next_adm_no = '1001'
 
     if request.method == 'POST':
         form = StudentAdmissionForm(request.POST, request.FILES)
         if form.is_valid():
             student = form.save(commit=False)
             student.school = school
-            student.admission_no = next_adm_no  # use numeric admission no
-            student.is_active = True  # ensure active on manual admit
+            student.admission_no = next_adm_no
+            student.is_active = True
+
+            # ✅ Format and clean inputs
+            student.full_name = str(student.full_name).strip().title()
+            student.gender = str(student.gender).strip().capitalize()
+            student.category = str(student.category).strip().upper()
+            student.religion = str(student.religion).strip().title()
+            student.mobile_no = str(student.mobile_no).strip()
+            student.whatsapp_no = str(student.whatsapp_no).strip()
+            student.aadhar_no = str(student.aadhar_no).strip()
+            student.father_name = str(student.father_name).strip().title() if student.father_name else ""
+            student.mother_name = str(student.mother_name).strip().title() if student.mother_name else ""
+            student.father_profession = str(student.father_profession).strip().title() if student.father_profession else ""
+
             student.save()
-            
+
+            # ✅ Academic record creation
             academic_year = form.cleaned_data['academic_year']
             class_enrolled = form.cleaned_data['class_enrolled']
-            section = form.cleaned_data.get('section', '')
+            section = str(form.cleaned_data.get('section', '')).strip().upper()
 
             StudentAcademicRecord.objects.create(
                 student=student,
@@ -46,12 +62,13 @@ def admit_student(request):
                 section=section,
                 school=school
             )
-            
+
             return redirect('student_list')
     else:
         form = StudentAdmissionForm(initial={'admission_no': next_adm_no})
 
     return render(request, 'admission/admit_student.html', {'form': form})
+
 
 @login_required
 def student_list(request):
@@ -218,27 +235,36 @@ def student_profile(request, student_id):
         'records': records
     })
 
-from .forms import StudentAdmissionForm
-from django.http import HttpResponseForbidden
+# admission/views.py
 
 @login_required
 def edit_student(request, student_id):
     student = get_object_or_404(StudentAdmission, id=student_id)
-    school = request.user.userprofile.school
+    academic_record = student.academic_records.first()  # adjust if multiple years
 
-    # Restrict editing only to same school
-    if student.school != school:
-        return HttpResponseForbidden("You don't have permission to edit this student.")
+    if request.method == 'POST':
+        form = StudentEditForm(request.POST, request.FILES, instance=student, academic_record=academic_record)
+        if form.is_valid():
+            form.save()
+            # update academic record too
+            if academic_record:
+                academic_record.academic_year = form.cleaned_data['academic_year']
+                academic_record.class_enrolled = form.cleaned_data['class_enrolled']
+                academic_record.save()
 
-    form = StudentAdmissionForm(request.POST or None, instance=student)
+            messages.success(request, 'Student and Academic info updated successfully.')
+            return redirect('student_profile', student_id=student.id)
+    else:
+        form = StudentEditForm(instance=student, academic_record=academic_record)
 
-    if form.is_valid():
-        form.save()
-        return redirect('student_profile', student_id=student.id)
+    return render(request, 'admission/edit_student.html', {
+        'form': form,
+        'student': student
+    })
 
-    return render(request, 'admission/edit_student.html', {'form': form, 'student': student})
 
 
+from django.http import HttpResponseForbidden
 @login_required
 def soft_delete_student(request, student_id):
     student = get_object_or_404(StudentAdmission, id=student_id)
@@ -251,13 +277,15 @@ def soft_delete_student(request, student_id):
         return redirect('student_list')
 
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from openpyxl import load_workbook
 from django.utils.dateparse import parse_date
-from admission.models import StudentAdmission,AcademicYear, Class, StudentAcademicRecord
-from core.models import School
+from dateutil.parser import parse as smart_date_parse
 from datetime import datetime, date
+
+from .models import StudentAdmission, StudentAcademicRecord, AcademicYear, Class
 
 
 @login_required
@@ -278,34 +306,63 @@ def import_students_excel(request):
                     academic_year_str, class_name, section
                 ) = row
 
-                # Handle both Excel date formats and strings
+                # ✅ Normalize string fields
+                full_name = str(full_name).strip().title() if full_name else ""
+                gender = str(gender).strip().capitalize() if gender else ""
+                category = str(category).strip().upper() if category else ""
+                religion = str(religion).strip().title() if religion else ""
+                mobile_no = str(mobile_no).strip() if mobile_no else ""
+                whatsapp_no = str(whatsapp_no).strip() if whatsapp_no else ""
+                aadhar_no = str(aadhar_no).strip() if aadhar_no else ""
+                father_name = str(father_name).strip().title() if father_name else ""
+                mother_name = str(mother_name).strip().title() if mother_name else ""
+                father_profession = str(father_profession).strip().title() if father_profession else ""
+                section = str(section).strip().upper() if section else ""
+                academic_year_str = str(academic_year_str).strip()
+                class_name = str(class_name).strip()
+
+                # ✅ Parse DOB
                 if isinstance(date_of_birth, (datetime, date)):
                     dob = date_of_birth
                 else:
-                    dob = parse_date(str(date_of_birth)) if date_of_birth else None
+                    try:
+                        dob = smart_date_parse(str(date_of_birth)).date()
+                    except:
+                        messages.error(request, f"{full_name}: Invalid or unreadable Date of Birth '{date_of_birth}'.")
+                        continue
 
-                if not dob:
-                    messages.error(request, f"{full_name}: Invalid or missing date of birth.")
-                    continue
-
+                # ✅ Parse Admission Date
                 if isinstance(admission_date, (datetime, date)):
                     adm_date = admission_date
                 else:
-                    adm_date = parse_date(str(admission_date)) if admission_date else None
+                    try:
+                        adm_date = smart_date_parse(str(admission_date)).date()
+                    except:
+                        messages.error(request, f"{full_name}: Invalid or unreadable Admission Date '{admission_date}'.")
+                        continue
 
-                if not adm_date:
-                    messages.error(request, f"{full_name}: Invalid or missing admission date.")
+                # ✅ Validate Gender
+                if gender not in ["Male", "Female", "Other"]:
+                    messages.error(request, f"{full_name}: Invalid gender '{gender}'.")
                     continue
 
-                # Look up academic year and class
-                academic_year = AcademicYear.objects.get(name=academic_year_str, school=school)
-                class_enrolled = Class.objects.get(name=class_name, school=school)
+                # ✅ Validate Category
+                if category not in ["GEN", "OBC", "SC", "ST"]:
+                    messages.error(request, f"{full_name}: Invalid category '{category}'.")
+                    continue
 
-                # Generate admission number
+                # ✅ Normalize class name (handle "6" as "Class 6")
+                normalized_class_name = class_name if class_name.lower().startswith("class") else f"Class {class_name}"
+
+                # ✅ Lookup academic year and class
+                academic_year = AcademicYear.objects.get(name=academic_year_str, school=school)
+                class_enrolled = Class.objects.get(name=normalized_class_name, school=school)
+
+                # ✅ Generate admission number
                 last_student = StudentAdmission.objects.filter(school=school).order_by('-id').first()
                 next_adm_no = str(int(last_student.admission_no) + 1) if last_student and last_student.admission_no.isdigit() else '1001'
 
-                # Create student
+                # ✅ Create Student
                 student = StudentAdmission.objects.create(
                     full_name=full_name,
                     date_of_birth=dob,
@@ -324,7 +381,7 @@ def import_students_excel(request):
                     admission_no=next_adm_no
                 )
 
-                # Create academic record
+                # ✅ Create Academic Record
                 StudentAcademicRecord.objects.create(
                     student=student,
                     academic_year=academic_year,
@@ -347,10 +404,6 @@ def import_students_excel(request):
     return render(request, 'admission/import_students_excel.html')
 
 
-
-from django.http import FileResponse
-import os
-from django.conf import settings
 @login_required
 def download_excel_template(request):
     file_path = os.path.join(settings.BASE_DIR, 'static/admission/student_import_template.xlsx')

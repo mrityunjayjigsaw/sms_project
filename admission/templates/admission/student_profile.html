@@ -34,7 +34,7 @@
     <tr>
         <td>{{ record.academic_year.name }}</td>
         <td>{{ record.class_enrolled.name }}</td>
-        <td>{{ record.section|default:"-" }}</td>
+        <td>{{ record.section|default:"A" }}</td>
         <td>{{ record.is_promoted|yesno:"Yes,No" }}</td>
         <td>{% if record.promoted_to %}{{ record.promoted_to.name }}{% else %}-{% endif %}</td>
         <td>{{ record.remarks|default:"-" }}</td>
@@ -47,8 +47,11 @@
 {% if student.is_active %}
     <form method="post" action="{% url 'soft_delete_student' student.id %}">
         {% csrf_token %}
-        <button type="submit">Mark as Left School</button>
+        <button type="submit">Mark as Left School/Delete</button>
     </form>
 {% else %}
     <p><strong>Status:</strong> Left School</p>
 {% endif %}
+<a href="{% url 'edit_student' student.id %}">Edit Student Info</a>
+
+

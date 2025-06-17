@@ -9,7 +9,7 @@ GENDER_CHOICES = [
 ]
 
 CATEGORY_CHOICES = [
-    ('GEN', 'General'),
+    ('GEN', 'GEN'),
     ('OBC', 'OBC'),
     ('SC', 'SC'),
     ('ST', 'ST'),

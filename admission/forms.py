@@ -99,3 +99,35 @@ class StudentAcademicRecordForm(forms.ModelForm):
 
 class ExcelUploadForm(forms.Form):
     excel_file = forms.FileField(label="Select Excel File (.xlsx)")
+
+
+# admission/forms.py
+
+from django import forms
+from .models import StudentAdmission, StudentAcademicRecord
+
+class StudentEditForm(forms.ModelForm):
+    academic_year = forms.ModelChoiceField(queryset=AcademicYear.objects.all(), required=True)
+    class_enrolled = forms.ModelChoiceField(queryset=Class.objects.all(), required=True)
+
+    class Meta:
+        model = StudentAdmission
+        fields = [
+            'full_name', 'gender', 'date_of_birth', 'photo',
+            'mobile_no', 'whatsapp_no', 'aadhar_no',
+            'father_name', 'mother_name', 'father_profession',
+            'category', 'religion'
+        ]
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Accept academic record as argument
+        academic_record = kwargs.pop('academic_record', None)
+        super().__init__(*args, **kwargs)
+
+        if academic_record:
+            self.fields['academic_year'].initial = academic_record.academic_year
+            self.fields['class_enrolled'].initial = academic_record.class_enrolled
+
