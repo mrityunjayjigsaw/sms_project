@@ -1,0 +1,93 @@
+{% load get_dict %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Posted Fees (By Student)</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        h2, h3 { margin-top: 20px; }
+        form { margin-bottom: 20px; }
+        .summary { margin-top: 20px; font-weight: bold; }
+        .button-group { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>View Posted Fees (By Student)</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">View Fees</button>
+</form>
+
+{% if student %}
+    <h3>Fee Details for: {{ student.full_name }}</h3>
+
+    <div class="button-group">
+        <button onclick="window.print()">🖨️ Print Report</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                {% for fee_type in fee_types %}
+                    <th>{{ fee_type.name }}</th>
+                {% endfor %}
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for month in months %}
+                <tr>
+                    <td>{{ month }}</td>
+                    {% for fee_type in fee_types %}
+                        <td>
+                            ₹{{ fee_data|get_item:month|get_item:fee_type.name|default:"" }}
+                        </td>
+                    {% endfor %}
+                    <td><strong>₹{{ total_per_month|get_item:month|default:"0" }}</strong></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Total</th>
+                {% for fee_type in fee_types %}
+                    <th>₹{{ total_per_fee_type|get_item:fee_type.name|default:"0" }}</th>
+                {% endfor %}
+                <th><strong>₹{{ grand_total }}</strong></th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="summary">
+        Total Fee Posted: ₹{{ grand_total }}
+    </div>
+{% elif form.is_bound and form.is_valid %}
+    <p>No fee data available for the selected student.</p>
+{% endif %}
+
+
+<script>
+    const form = document.querySelector('form');
+    const yearField = document.querySelector('select[name="academic_year"]');
+    const classField = document.querySelector('select[name="class_enrolled"]');
+
+    function autoSubmitIfReady() {
+        if (yearField.value && classField.value) {
+            form.submit();
+        }
+    }
+
+    yearField.addEventListener('change', autoSubmitIfReady);
+    classField.addEventListener('change', autoSubmitIfReady);
+</script>
+
+
+</body>
+</html>

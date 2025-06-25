@@ -226,7 +226,82 @@ def view_posted_fees_detail(request):
         'fee_types': fee_types,
     })
 
-# fees/views.py
+from datetime import date 
+# Define your months manually
+MONTH_CHOICES = [
+    'April', 'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December', 'January', 'February', 'March'
+]
+
+MONTH_NAME_TO_NUMBER = {
+    'January': 1, 'February': 2, 'March': 3, 'April': 4,
+    'May': 5, 'June': 6, 'July': 7, 'August': 8,
+    'September': 9, 'October': 10, 'November': 11, 'December': 12
+}
+
+def view_posted_fees_by_student(request):
+    form = StudentFeeLookupForm(request.POST or None)
+    student = None
+    fee_types = FeeType.objects.all()
+    fee_data = {}
+    total_per_month = {}
+    total_per_fee_type = {}
+    grand_total = 0
+
+    if request.method == 'POST' and form.is_valid():
+        academic_year = form.cleaned_data['academic_year']
+        class_enrolled = form.cleaned_data['class_enrolled']
+        school = request.user.userprofile.school
+
+        # Get the StudentAcademicRecord selected
+        record = form.cleaned_data['student']
+
+        # Ensure record belongs to selected school, year, and class
+        if (record.academic_year == academic_year and 
+            record.class_enrolled == class_enrolled and 
+            record.school == school):
+
+            student = record.student
+            start_year = academic_year.start_date.year
+            end_year = academic_year.end_date.year
+
+            for month_name in MONTH_CHOICES:
+                fee_data[month_name] = {}
+                month_number = MONTH_NAME_TO_NUMBER[month_name]
+
+                year = start_year if month_number >= 4 else end_year
+                month_date = date(year, month_number, 1)
+
+                row_total = 0
+
+                for fee_type in fee_types:
+                    due = StudentFeeDue.objects.filter(
+                        student=student,
+                        fee_type=fee_type,
+                        month=month_date,
+                        is_posted=True
+                    ).first()
+
+                    amount = float(due.amount_due) if due else 0
+                    fee_data[month_name][fee_type.name] = amount if amount else ""
+
+                    if amount:
+                        row_total += amount
+                        total_per_fee_type[fee_type.name] = total_per_fee_type.get(fee_type.name, 0) + amount
+
+                total_per_month[month_name] = row_total
+                grand_total += row_total
+
+    return render(request, 'fees/view_posted_fees_by_student.html', {
+        'form': form,
+        'student': student,
+        'fee_data': fee_data,
+        'fee_types': fee_types,
+        'months': MONTH_CHOICES,
+        'total_per_month': total_per_month,
+        'total_per_fee_type': total_per_fee_type,
+        'grand_total': grand_total,
+    })
 
 
 def fee_collection_filter(request):

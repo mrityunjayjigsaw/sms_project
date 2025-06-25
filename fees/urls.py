@@ -11,4 +11,5 @@ urlpatterns = [
     path('fee-collection/', fee_collection_filter, name='fee_collection_filter'),
     path('collect-fee/<int:student_id>/<str:month_str>/', collect_fee_step2, name='collect_fee_step2'),
     path('download-receipt/<int:payment_id>/', download_receipt, name='download_receipt'),
+    path('view-posted-fees/student/', view_posted_fees_by_student, name='view_posted_fees_by_student'),
 ]
