@@ -45,6 +45,7 @@ class StudentFeeDue(models.Model):
     student = models.ForeignKey(StudentAdmission, on_delete=models.CASCADE)
     fee_type = models.ForeignKey(FeeType, on_delete=models.CASCADE)
     month = models.DateField(help_text="Use 1st of the month for uniformity, e.g. 2025-07-01")
+    original_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     amount_due = models.DecimalField(max_digits=10, decimal_places=2)
     is_posted = models.BooleanField(default=False)
     carry_forward = models.DecimalField(max_digits=10, decimal_places=2, default=0)

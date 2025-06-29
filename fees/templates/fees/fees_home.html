@@ -12,8 +12,10 @@
         <!-- Add these when implemented -->
         <li><a href="{% url 'assign_fee_plan_bulk' %}">📌 Assign Student Fee Plans</a></li>
         <li><a href="{% url 'assign_fees_bulk' %}">📅 Post Monthly Fees</a></li>
+        <li><a href="{% url 'view_posted_fees' %}">🧾 View Posted Fees Details (by Month & Class)</a></li>
+        <li><a href="{% url 'view_posted_fees_by_student' %}">🧾 View Posted Fees Details (by Student)</a></li>
         <li><a href="{% url 'view_remaining_due_detail' %}">🧾 View Remaining Due Details (by Month & Class)</a></li>
-        <li><a href="{% url 'view_posted_fees_by_student'%}">🧾 View Posted Fee Details (by Student)</a></li>
+        <li><a href="{% url 'view_remaining_due_by_student'%}">🧾 View Remaining Due Details (by Student)</a></li>
         <li><a href="{% url 'fee_collection_filter' %}">💰 Collect Fee Payment</a></li>
         {% comment %} <li><a href="#">📑 View Student Fee Ledger</a></li> {% endcomment %}
     </ul>
