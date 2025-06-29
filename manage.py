@@ -2,6 +2,10 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import warnings
+
+# 🔇 Suppress deprecation warning from pkg_resources immediately
+warnings.filterwarnings("ignore", category=UserWarning, module="pkg_resources")
 
 
 def main():
@@ -20,3 +24,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
