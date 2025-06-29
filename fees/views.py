@@ -187,7 +187,7 @@ def assign_fees_bulk(request):
     })
 
 
-def view_posted_fees_detail(request):
+def view_remaining_due_detail(request):
     form = PostingFeesForm(request.POST or None)
     students = []
     fee_types = FeeType.objects.all()
@@ -209,7 +209,7 @@ def view_posted_fees_detail(request):
         # Fetch dues for selected month
         for record in students:
             student = record.student
-            student.due_map = {}
+            student.due_map = {} #A new attribute due_map is added to each student object to store a mapping of fee_type.id → amount_due.
 
             for fee_type in fee_types:
                 due = StudentFeeDue.objects.filter(
@@ -220,7 +220,7 @@ def view_posted_fees_detail(request):
                 ).first()
                 student.due_map[fee_type.id] = due.amount_due if due else ""
 
-    return render(request, 'fees/view_posted_fees_detail.html', {
+    return render(request, 'fees/view_remaining_due_detail.html', {
         'form': form,
         'students': students,
         'fee_types': fee_types,

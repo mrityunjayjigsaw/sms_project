@@ -1,12 +1,12 @@
 {% load get_dict %}
 <a href="{% url 'home'%}"><button>Home</button></a>
 <a href="{% url 'fees_home'%}"><button>Back</button></a>
-<h2>View Posted Monthly Fees (Read-only)</h2>
+<h2>Remaining Dues of Students by month and class (Read-only)</h2>
 
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Show Posted Fees</button>
+    <button type="submit">Show Remaining Due</button>
 </form>
 
 {% if students %}
