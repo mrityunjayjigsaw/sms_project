@@ -16,6 +16,7 @@ from decimal import Decimal
 def fees_home(request):
     return render(request, 'fees/fees_home.html')
 
+
 def add_fee_type(request):
     form = FeeTypeForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -25,11 +26,9 @@ def add_fee_type(request):
     return render(request, 'fees/add_fee_type.html', {'form': form})
 
 
-
 def fee_type_list(request):
     fee_types = FeeType.objects.all()
     return render(request, 'fees/fee_type_list.html', {'fee_types': fee_types})
-
 
 
 def assign_fee_plan_bulk(request):
@@ -305,7 +304,6 @@ def view_remaining_due_by_student(request):
         'grand_total': grand_total,
     })
 
-
 def view_posted_fees(request):
     form = PostingFeesForm(request.POST or None)
     students = []
@@ -406,15 +404,15 @@ def view_posted_fees_by_student(request):
 def fee_collection_filter(request):
     form = FeeCollectionFilterForm(request.POST or None)
     students = []
-    selected_month_str = None
+    selected_payment_date_str = None
 
     if request.method == 'POST' and form.is_valid():
         academic_year = form.cleaned_data['academic_year']
         class_enrolled = form.cleaned_data['class_enrolled']
-        month = form.cleaned_data['month']  # this will be a `date` object like 2025-04-01
+        payment_date = form.cleaned_data['payment_date']
         school = request.user.userprofile.school
 
-        selected_month_str = month.strftime('%Y-%m')  # for URL in student list
+        selected_payment_date_str = payment_date.strftime('%Y-%m-%d')
 
         students = StudentAcademicRecord.objects.filter(
             academic_year=academic_year,
@@ -425,13 +423,14 @@ def fee_collection_filter(request):
     return render(request, 'fees/fee_collection_filter.html', {
         'form': form,
         'students': students,
-        'selected_month': selected_month_str
+        'selected_payment_date': selected_payment_date_str
     })
 
 
-def collect_fee_step2(request, student_id, month_str):
+
+def collect_fee_step2(request, student_id, payment_date):
     student = get_object_or_404(StudentAdmission, id=student_id)
-    month_date = date.fromisoformat(month_str + "-01")
+    payment_date_obj = date.fromisoformat(payment_date)
     fee_types = FeeType.objects.all()
     dues = StudentFeeDue.objects.filter(student=student, is_posted=True).order_by('month')
     advance_obj, _ = StudentAdvanceBalance.objects.get_or_create(student=student)
@@ -458,7 +457,7 @@ def collect_fee_step2(request, student_id, month_str):
 
         return render(request, 'fees/collect_fee_step2.html', {
             'student': student,
-            'month': month_date,
+            'payment_date': payment_date_obj,
             'dues': dues,
             'advance': advance_amount,
             'amount_paid': amount_paid,
@@ -477,10 +476,10 @@ def collect_fee_step2(request, student_id, month_str):
             total_allocated = Decimal('0.00')
             payment = StudentFeePayment.objects.create(
                 student=student,
-                month=month_date,
+                payment_date=payment_date_obj,
                 total_amount=amount_paid,
                 payment_mode=payment_mode,
-                remarks=f"Fees collected for {month_date.strftime('%B %Y')}"
+                remarks=f"Fees collected for {payment_date_obj.strftime('%B %Y')}"
             )
 
             for due in dues:
@@ -498,7 +497,7 @@ def collect_fee_step2(request, student_id, month_str):
                     )
 
                     Transaction.objects.create(
-                        date=date.today(),
+                        date=payment_date_obj,
                         debit_account=AccountHead.objects.get(name="CASH" if payment_mode == "CASH" else "BANK"),
                         credit_account=AccountHead.objects.get(name="STUDENT_DUES"),
                         amount=Decimal(alloc),
@@ -527,7 +526,7 @@ def collect_fee_step2(request, student_id, month_str):
 
     return render(request, 'fees/collect_fee_step2.html', {
         'student': student,
-        'month': month_date,
+        'payment_date': payment_date_obj,
         'dues': dues,
         'advance': advance_amount,
         'step': 'entry',

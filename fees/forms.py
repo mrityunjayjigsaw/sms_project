@@ -27,11 +27,11 @@ class FeeCollectionFilterForm(forms.Form):
     academic_year = forms.ModelChoiceField(queryset=AcademicYear.objects.all(), label="Academic Year")
     class_enrolled = forms.ModelChoiceField(queryset=Class.objects.all(), label="Class")
 
-    month = forms.DateField(
-        input_formats=['%Y-%m'],
-        widget=forms.DateInput(attrs={'type': 'month'}),
+    payment_date = forms.DateField(
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(attrs={'type': 'date'}),
         required=True,
-        label="Month (e.g., April 2025)"
+        label="Payment Date"
     )
 
 

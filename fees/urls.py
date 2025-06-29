@@ -12,7 +12,7 @@ urlpatterns = [
     path('view-posted-fees/', view_posted_fees, name='view_posted_fees'),
     path('view-posted-fees-by-student/', view_posted_fees_by_student, name='view_posted_fees_by_student'),
     path('fee-collection/', fee_collection_filter, name='fee_collection_filter'),
-    path('collect-fee/<int:student_id>/<str:month_str>/', collect_fee_step2, name='collect_fee_step2'),
+    path('collect-fee/<int:student_id>/<str:payment_date>/', collect_fee_step2, name='collect_fee_step2'),
     path('download-receipt/<int:payment_id>/', download_receipt, name='download_receipt'),
     
 ]

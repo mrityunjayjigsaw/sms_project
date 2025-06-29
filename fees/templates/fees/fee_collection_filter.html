@@ -26,7 +26,7 @@
                 <td>{{ record.student.full_name }}</td>
                 <td>{{ record.student.father_name }}</td>
                 <td>
-                    <a href="{% url 'collect_fee_step2' record.student.id selected_month %}">Collect Fees</a>
+                    <a href="{% url 'collect_fee_step2' record.student.id selected_payment_date %}">Collect Fees</a>
                 </td>
             </tr>
             {% endfor %}

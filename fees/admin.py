@@ -38,7 +38,7 @@ class PaymentDetailInline(admin.TabularInline):
 
 @admin.register(StudentFeePayment)
 class StudentFeePaymentAdmin(admin.ModelAdmin):
-    list_display = ['student', 'month', 'total_amount', 'date']
+    list_display = ['student', 'payment_date', 'total_amount', 'date']
     inlines = [PaymentDetailInline]
 
 

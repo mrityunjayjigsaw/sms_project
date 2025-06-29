@@ -65,14 +65,14 @@ class StudentFeePayment(models.Model):
     ]
 
     student = models.ForeignKey(StudentAdmission, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
-    month = models.DateField()
+    date = models.DateTimeField(auto_now_add=True)
+    payment_date = models.DateField()
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES, default='CASH')  # ✅
     remarks = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.student.full_name} - ₹{self.total_amount} - {self.month.strftime('%B %Y')}"
+        return f"{self.student.full_name} - ₹{self.total_amount} - {self.payment_date.strftime('%d %b %Y')}"
 
 
 class StudentFeePaymentDetail(models.Model):
