@@ -16,6 +16,7 @@
 
     <form method="post">
         {% csrf_token %}
+        {{ formset.management_form }}
         <table border="1" cellpadding="5" cellspacing="0">
             <tr>
                 <th>Account Name</th>
@@ -24,8 +25,9 @@
             </tr>
             {% for form in formset %}
                 <tr>
-                    <td>{{ form.name.value }}</td>
-                    <td>{{ form.type.value|title }}</td>
+                    {{ form.id }}
+                    <td>{{ form.name }}</td>
+                    <td>{{ form.type }}</td>
                     <td>{{ form.opening_balance }}</td>
                 </tr>
             {% endfor %}

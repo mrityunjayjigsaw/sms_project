@@ -282,23 +282,33 @@ def export_ledger_excel(request):
 @login_required
 def set_opening_balances(request):
     user_school = request.user.userprofile.school
+
     AccountHeadFormSet = modelformset_factory(
         AccountHead,
-        fields=('name', 'type', 'opening_balance'),
+        form=AccountHeadForm,
         extra=0
     )
 
     queryset = AccountHead.objects.filter(school=user_school).order_by('type', 'name')
     formset = AccountHeadFormSet(request.POST or None, queryset=queryset)
 
-    if request.method == 'POST' and formset.is_valid():
-        formset.save()
-        messages.success(request, "Opening balances updated successfully.")
-        return redirect('set_opening_balances')
+    if request.method == 'POST':
+        print("POST received ✅")
+        print("Raw POST data:", request.POST)
+
+        if formset.is_valid():
+            print("Formset is valid ✅")
+            formset.save()
+            messages.success(request, "Opening balances updated successfully.")
+            return redirect('set_opening_balances')
+        else:
+            print("Formset is NOT valid ❌")
+            print("Formset errors:", formset.errors)
 
     return render(request, 'transactions/set_opening_balances.html', {
         'formset': formset,
     })
+
 
 
 @login_required
