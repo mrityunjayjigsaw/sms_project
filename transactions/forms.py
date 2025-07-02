@@ -25,3 +25,9 @@ class AccountHeadForm(forms.ModelForm):
     def clean_name(self):
         name = self.cleaned_data.get('name')
         return name.strip().upper() 
+    
+class AccountHeadBalanceForm(AccountHeadForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].disabled = True
+        self.fields['type'].disabled = True

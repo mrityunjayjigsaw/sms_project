@@ -285,7 +285,7 @@ def set_opening_balances(request):
 
     AccountHeadFormSet = modelformset_factory(
         AccountHead,
-        form=AccountHeadForm,
+        form=AccountHeadBalanceForm,
         extra=0
     )
 
@@ -294,7 +294,7 @@ def set_opening_balances(request):
 
     if request.method == 'POST':
         print("POST received ✅")
-        print("Raw POST data:", request.POST)
+        # print("Raw POST data:", request.POST)
 
         if formset.is_valid():
             print("Formset is valid ✅")
@@ -303,7 +303,7 @@ def set_opening_balances(request):
             return redirect('set_opening_balances')
         else:
             print("Formset is NOT valid ❌")
-            print("Formset errors:", formset.errors)
+            # print("Formset errors:", formset.errors)
 
     return render(request, 'transactions/set_opening_balances.html', {
         'formset': formset,
