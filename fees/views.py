@@ -109,12 +109,23 @@ def assign_fees_bulk(request):
 
                 for fee_type in fee_types:
                     try:
-                        prev_due = StudentFeeDue.objects.get(
-                            student=student,
-                            fee_type=fee_type,
-                            month=prev_month_start
-                        )
-                        amount = prev_due.amount_due
+                        if month.month == 4:
+                            # For April, there is no previous month, so use April itself if exists
+                            due = StudentFeeDue.objects.get(
+                                student=student,
+                                fee_type=fee_type,
+                                month=month,
+                                is_posted=True
+                            )
+                        else:
+                            # For other months, fetch from previous month
+                            due = StudentFeeDue.objects.get(
+                                student=student,
+                                fee_type=fee_type,
+                                month=prev_month_start,
+                                is_posted=True
+                            )
+                        amount = due.original_due
                     except StudentFeeDue.DoesNotExist:
                         try:
                             plan = StudentFeePlan.objects.get(student=student, fee_type=fee_type)
@@ -123,7 +134,7 @@ def assign_fees_bulk(request):
                             amount = ""
 
                     student.previous_fee_keys[fee_type.id] = amount
-
+            
             # Check if any fee already posted for selected month
             student_ids = [record.student.id for record in students]
             posted_dues = StudentFeeDue.objects.filter(
@@ -427,7 +438,6 @@ def fee_collection_filter(request):
     })
 
 
-
 def collect_fee_step2(request, student_id, payment_date):
     student = get_object_or_404(StudentAdmission, id=student_id)
     payment_date_obj = date.fromisoformat(payment_date)
@@ -535,20 +545,41 @@ def collect_fee_step2(request, student_id, payment_date):
 
 
 
+from django.db.models import Q
+
 def download_receipt(request, payment_id):
     payment = StudentFeePayment.objects.select_related('student').prefetch_related('details__fee_type').get(id=payment_id)
+
+    # Rebuild detailed data with due info
+    full_details = []
+    for detail in payment.details.all():
+        # Try to find the matching due for this fee type and student
+        due = StudentFeeDue.objects.filter(
+            student=payment.student,
+            fee_type=detail.fee_type,
+            is_posted=True,
+            month__lte=payment.payment_date  # Optional: Filter only dues before payment date
+        ).order_by('-month').first()  # Use latest posted month if multiple found
+
+        full_details.append({
+            'fee_type': detail.fee_type.name,
+            'amount_paid': detail.amount_paid,
+            'original_due': due.original_due if due else '',
+            'due_month': due.month.strftime('%B %Y') if due else '',
+        })
+
     template_path = 'fees/fee_receipt.html'
     context = {
         'payment': payment,
         'student': payment.student,
-        'details': payment.details.all(),
-        'school_name': 'My School Name',  # Can be customized later
-        'logo_url': os.path.join('static', 'school_logo.png'),  # optional
-        'copy_types': ['Student', 'Office'],  # For duplicate receipts
+        'details': full_details,
+        'school_name': 'My School Name',
+        'logo_url': os.path.join('static', 'school_logo.png'),
+        'copy_types': ['Student', 'Office'],
     }
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'filename="receipt_{payment.student.full_name}_{payment.month.strftime("%Y_%m")}.pdf"'
+    response['Content-Disposition'] = f'filename="receipt_{payment.student.full_name}_{payment.payment_date.strftime("%Y_%m")}.pdf"'
 
     template = get_template(template_path)
     html = template.render(context)
@@ -556,6 +587,7 @@ def download_receipt(request, payment_id):
     if pisa_status.err:
         return HttpResponse('We had errors rendering PDF', status=500)
     return response
+
 
 
 

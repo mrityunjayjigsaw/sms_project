@@ -51,27 +51,31 @@
             {% else %}
                 -
             {% endif %}<br>
-            <strong>Month:</strong> {{ payment.month|date:"F Y" }}<br>
-            <strong>Date:</strong> {{ payment.date }}<br>
+            <strong>Payment Date:</strong> {{ payment.payment_date|date:"d M Y" }}<br>
+            <strong>Entry Date:</strong> {{ payment.date|date:"d M Y, H:i" }}<br>
             <strong>Payment Mode:</strong> {{ payment.get_payment_mode_display }}
         </div>
 
         <table class="border-table">
             <thead>
                 <tr>
+                    <th>Month</th>
                     <th>Fee Type</th>
-                    <th>Amount</th>
+                    <th>Original Due</th>
+                    <th>Paid</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in details %}
                 <tr>
-                    <td>{{ item.fee_type.name }}</td>
+                    <td>{{ item.due_month }}</td>
+                    <td>{{ item.fee_type }}</td>
+                    <td>₹{{ item.original_due }}</td>
                     <td>₹{{ item.amount_paid }}</td>
                 </tr>
                 {% endfor %}
                 <tr>
-                    <td><strong>Total Paid</strong></td>
+                    <td colspan="3"><strong>Total Paid</strong></td>
                     <td><strong>₹{{ payment.total_amount }}</strong></td>
                 </tr>
             </tbody>
