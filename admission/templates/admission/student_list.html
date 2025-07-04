@@ -1,76 +1,218 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Student List</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f2f4f7;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px 25px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .header p {
+            margin: 4px 0;
+        }
+
+        .buttons {
+            text-align: right;
+        }
+
+        .buttons a button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            margin-left: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        select, input[type="text"] {
+            padding: 5px;
+            font-size: 13px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        a.action-link {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        a.action-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 15px;
+            color: #999;
+        }
+    </style>
 </head>
 <body>
-    <p>Logged in as: {{ request.user.username }} (Superuser: {{ request.user.is_superuser }})</p>
-    <p>Found {{ students|length }} students</p>
-    <a href="{% url 'home'%}"><button>Home</button></a>
-    <a href="{% url 'admission_home'%}"><button>Back</button></a>
+
+<div class="container">
+
+    <div class="header">
+        <div>
+            <p>👤 Logged in as: <strong>{{ request.user.username }}</strong></p>
+            {% comment %} <p>🛡 Superuser: <strong>{{ request.user.is_superuser }}</strong></p> {% endcomment %}
+            <p>📋 Found <strong>{{ students|length }}</strong> students</p>
+        </div>
+        <div class="buttons">
+            <a href="{% url 'home' %}"><button>Home</button></a>
+            <a href="{% url 'admission_home' %}"><button>Back</button></a>
+        </div>
+    </div>
+
     <h2>Admitted Students</h2>
 
     <form method="get">
-        <label>Class:</label>
-        <select name="class_id">
-            <option value="">All</option>
-            {% for cls in classes %}
-                <option value="{{ cls.id }}" {% if selected_class == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
-            {% endfor %}
-        </select>
+        <div>
+            <label for="class">Class:</label>
+            <select name="class_id" id="class">
+                <option value="">All</option>
+                {% for cls in classes %}
+                    <option value="{{ cls.id }}" {% if selected_class == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label>Year:</label>
-        <select name="year_id">
-            <option value="">All</option>
-            {% for year in years %}
-                <option value="{{ year.id }}" {% if selected_year == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
-            {% endfor %}
-        </select>
+        <div>
+            <label for="year">Year:</label>
+            <select name="year_id" id="year">
+                <option value="">All</option>
+                {% for year in years %}
+                    <option value="{{ year.id }}" {% if selected_year == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label>Name:</label>
-        <input type="text" name="name" value="{{ name_query }}">
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" name="name" id="name" value="{{ name_query }}">
+        </div>
 
         <button type="submit">Filter</button>
     </form>
 
-    <hr>
-
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>Admission No</th>
-            <th>Name</th>
-            <th>Gender</th>
-            <th>DOB</th>
-            <th>Contact</th>
-            <th>Email</th>
-        </tr>
-        {% for student in students %}
-        <tr>
-            <td>{{ student.admission_no }}</td>
-            <td>{{ student.full_name }}</td>
-            <td>{{ student.gender }}</td>
-            <td>{{ student.date_of_birth }}</td>
-            <td>{{ student.mobile_no }}</td>
-            <td>{{ student.email }}</td>
-            <td>
-                {% with request.GET.urlencode as query_string %}
-                <a href="{% url 'edit_student_academic_record' student.id %}?{{ query_string }}">Edit Class/Year</a>
-                {% endwith %}
-            </td>
-            <td>
-                {% with request.GET.urlencode as query_string %}
-                <a href="{% url 'view_academic_records' student.id %}?{{ query_string }}">Academic Records</a>
-                {% endwith %}
-            </td>
-            <td>
-                {% with request.GET.urlencode as query_string %}
-                <a href="{% url 'student_profile' student.id %}?{{ query_string }}">Profile</a>
-                {% endwith %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="6">No students found.</td></tr>
-        {% endfor %}
+    <table>
+        <thead>
+            <tr>
+                <th>Admission No</th>
+                <th>Name</th>
+                <th>Gender</th>
+                <th>DOB</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th colspan="3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.admission_no }}</td>
+                <td>{{ student.full_name }}</td>
+                <td>{{ student.gender }}</td>
+                <td>{{ student.date_of_birth }}</td>
+                <td>{{ student.mobile_no }}</td>
+                <td>{{ student.email }}</td>
+                <td>
+                    {% with request.GET.urlencode as query_string %}
+                    <a class="action-link" href="{% url 'edit_student_academic_record' student.id %}?{{ query_string }}">Edit</a>
+                    {% endwith %}
+                </td>
+                <td>
+                    {% with request.GET.urlencode as query_string %}
+                    <a class="action-link" href="{% url 'view_academic_records' student.id %}?{{ query_string }}">Records</a>
+                    {% endwith %}
+                </td>
+                <td>
+                    {% with request.GET.urlencode as query_string %}
+                    <a class="action-link" href="{% url 'student_profile' student.id %}?{{ query_string }}">Profile</a>
+                    {% endwith %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="no-data">No students found.</td></tr>
+            {% endfor %}
+        </tbody>
     </table>
+</div>
+
 </body>
 </html>

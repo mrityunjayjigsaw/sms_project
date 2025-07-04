@@ -1,20 +1,127 @@
-<a href="{% url 'home' %}"><button>Home</button></a>
-{% if request.GET %}
-    <a href="{% url 'student_list' %}?{{ request.GET.urlencode }}"><button>← Back to Student List</button></a>
-{% else %}
-    <a href="{% url 'student_list' %}"><button>← Back to Student List</button></a>
-{% endif %}
-{% comment %} This is to retain filter that were chosed in previous page {% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Academic Record</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
 
-<h2>Edit Academic Record for {{ student.full_name }}</h2>
+        .container {
+            max-width: 700px;
+            margin: 30px auto;
+            background-color: #fff;
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
 
-{% if academic_record %}
+        .top-buttons {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        .top-buttons a button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            margin-left: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .top-buttons a button:hover {
+            background-color: #5a6268;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        form {
+            font-size: 14px;
+        }
+
+        form p {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px;
+            font-size: 13px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 15px auto 0;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="top-buttons">
+        <a href="{% url 'home' %}"><button type="button">Home</button></a>
+        {% if request.GET %}
+            <a href="{% url 'student_list' %}?{{ request.GET.urlencode }}"><button type="button">← Back to Student List</button></a>
+        {% else %}
+            <a href="{% url 'student_list' %}"><button type="button">← Back to Student List</button></a>
+        {% endif %}
+    </div>
+
+    <h2>Edit Academic Record for {{ student.full_name }}</h2>
+
+    {% if academic_record %}
     <p><strong>Current Record:</strong> {{ academic_record.academic_year.name }} - {{ academic_record.class_enrolled.name }}</p>
-{% endif %}
+    {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save Changes</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Changes</button>
+    </form>
 
+</div>
+
+</body>
+</html>

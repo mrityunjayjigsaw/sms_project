@@ -1,60 +1,215 @@
-{% if request.GET %}
-<a href="{% url 'student_list' %}?{{ request.GET.urlencode }}"><button>← Back to Student List</button></a>
-{% else %}
-<a href="{% url 'student_list' %}"><button>← Back to Student List</button></a>
-{% endif %}
-<h2>Student Profile: {{ student.full_name }}</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Profile</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
 
-<h3>👤 Personal Information</h3>
-<ul>
-    <li><strong>Admission No:</strong> {{ student.admission_no }}</li>
-    <li><strong>Gender:</strong> {{ student.get_gender_display }}</li>
-    <li><strong>Date of Birth:</strong> {{ student.date_of_birth }}</li>
-    <li><strong>Father's Name:</strong> {{ student.father_name }}</li>
-    <li><strong>Mother's Name:</strong> {{ student.mother_name }}</li>
-    <li><strong>Category:</strong> {{ student.category }}</li>
-    <li><strong>Religion:</strong> {{ student.religion }}</li>
-    <li><strong>Mobile No:</strong> {{ student.mobile_no }}</li>
-    <li><strong>WhatsApp No:</strong> {{ student.whatsapp_no }}</li>
-    <li><strong>Aadhaar No:</strong> {{ student.aadhar_no }}</li>
-    <li><strong>Admission Date:</strong> {{ student.admission_date }}</li>
-</ul>
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: #fff;
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
 
-<h3>📚 Academic Records</h3>
-<table border="1">
-    <tr>
-        <th>Year</th>
-        <th>Class</th>
-        <th>Section</th>
-        <th>Promoted?</th>
-        <th>Promoted To</th>
-        <th>Remarks</th>
-    </tr>
-    {% for record in records %}
-    <tr>
-        <td>{{ record.academic_year.name }}</td>
-        <td>{{ record.class_enrolled.name }}</td>
-        <td>{{ record.section|default:"A" }}</td>
-        <td>{{ record.is_promoted|yesno:"Yes,No" }}</td>
-        <td>{% if record.promoted_to %}{{ record.promoted_to.name }}{% else %}-{% endif %}</td>
-        <td>{{ record.remarks|default:"-" }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="6">No academic records found.</td></tr>
-    {% endfor %}
-</table>
+        .top-buttons {
+            margin-bottom: 20px;
+        }
 
-{% if student.is_active %}
-    <form method="post" action="{% url 'soft_delete_student' student.id %}">
-        {% csrf_token %}
-        <button type="submit">Mark as Left School/Delete</button>
-    </form>
-{% else %}
+        .top-buttons button,
+        .top-buttons a.button-link {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-right: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .top-buttons a.button-link:hover,
+        .top-buttons button:hover {
+            background-color: #5a6268;
+        }
+
+        h2 {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        h3 {
+            margin-top: 25px;
+            color: #444;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            margin: 6px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .form-section {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .form-section button {
+            background-color: #dc3545;
+            color: white;
+            padding: 7px 16px;
+            font-size: 13px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-section button:hover {
+            background-color: #c82333;
+        }
+
+        .action-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .action-links a {
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 10px;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+
+        .download-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 7px 14px;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            text-decoration: none;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="top-buttons">
+        {% if request.GET %}
+        <a href="{% url 'student_list' %}?{{ request.GET.urlencode }}" class="button-link">← Back to Student List</a>
+        {% else %}
+        <a href="{% url 'student_list' %}" class="button-link">← Back to Student List</a>
+        {% endif %}
+    </div>
+
+    <h2>Student Profile: {{ student.full_name }}</h2>
+
+    <h3>👤 Personal Information</h3>
+    <ul>
+        <li><strong>Admission No:</strong> {{ student.admission_no }}</li>
+        <li><strong>Gender:</strong> {{ student.get_gender_display }}</li>
+        <li><strong>Date of Birth:</strong> {{ student.date_of_birth }}</li>
+        <li><strong>Father's Name:</strong> {{ student.father_name }}</li>
+        <li><strong>Mother's Name:</strong> {{ student.mother_name }}</li>
+        <li><strong>Category:</strong> {{ student.category }}</li>
+        <li><strong>Religion:</strong> {{ student.religion }}</li>
+        <li><strong>Mobile No:</strong> {{ student.mobile_no }}</li>
+        <li><strong>WhatsApp No:</strong> {{ student.whatsapp_no }}</li>
+        <li><strong>Aadhaar No:</strong> {{ student.aadhar_no }}</li>
+        <li><strong>Admission Date:</strong> {{ student.admission_date }}</li>
+    </ul>
+
+    <h3>📚 Academic Records</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Year</th>
+                <th>Class</th>
+                <th>Section</th>
+                <th>Promoted?</th>
+                <th>Promoted To</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.academic_year.name }}</td>
+                <td>{{ record.class_enrolled.name }}</td>
+                <td>{{ record.section|default:"A" }}</td>
+                <td>{{ record.is_promoted|yesno:"Yes,No" }}</td>
+                <td>{% if record.promoted_to %}{{ record.promoted_to.name }}{% else %}-{% endif %}</td>
+                <td>{{ record.remarks|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No academic records found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if student.is_active %}
+    <div class="form-section">
+        <form method="post" action="{% url 'soft_delete_student' student.id %}">
+            {% csrf_token %}
+            <button type="submit">Mark as Left School / Delete</button>
+        </form>
+    </div>
+    {% else %}
     <p><strong>Status:</strong> Left School</p>
-{% endif %}
-<a href="{% url 'edit_student' student.id %}">Edit Student Info</a>
-<a href="{% url 'generate_admission_form' student.id %}">
-    <button>Download Admission Form</button>
-</a>
+    {% endif %}
 
+    <div class="action-links">
+        <a href="{% url 'edit_student' student.id %}">✏️ Edit Student Info</a>
+        <a class="download-btn" href="{% url 'generate_admission_form' student.id %}">📄 Download Admission Form</a>
+    </div>
 
+</div>
+
+</body>
+</html>

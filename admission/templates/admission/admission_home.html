@@ -1,25 +1,101 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Admission Module</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #fff;
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            margin: 12px 0;
+        }
+
+        ul li a {
+            display: block;
+            text-decoration: none;
+            padding: 10px 14px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+        }
+
+        ul li a:hover {
+            background-color: #0056b3;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
+
+<div class="container">
     <h2>🎓 Admission Module</h2>
 
-    <p>Welcome {{ request.user.username }}!</p>
+    <p>Welcome <strong>{{ request.user.username }}</strong>!</p>
 
     <ul>
         <li><a href="{% url 'admit_student' %}">📝 Admit New Student</a></li>
         <li><a href="{% url 'student_list' %}">📋 View Student List</a></li>
         <li><a href="{% url 'add_class' %}">➕ Add Class</a></li>
+        <li><a href="{% url 'class_list' %}">📚 View Classes</a></li>
         <li><a href="{% url 'add_academic_year' %}">📅 Add Academic Year</a></li>
         <li><a href="{% url 'year_list' %}">📆 View Academic Years</a></li>
-        <li><a href="{% url 'class_list' %}">📚 View Classes</a></li>
         <li><a href="{% url 'import_students_excel' %}">📥 Import Students (Excel)</a></li>
         <!-- Future features -->
         <!-- <li><a href="#">📚 Promote Students</a></li> -->
     </ul>
 
-    <p><a href="{% url 'home' %}">← Back to Home</a></p>
+    <div class="back-link">
+        <a href="{% url 'home' %}">← Back to Home</a>
+    </div>
+</div>
+
 </body>
 </html>

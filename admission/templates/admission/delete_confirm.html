@@ -1,8 +1,92 @@
-<h2>Are you sure you want to delete this {{ type }}?</h2>
-<p><strong>{{ object }}</strong></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirm Delete</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Yes, Delete</button>
-    <a href="{% if type == 'Class' %}{% url 'class_list' %}{% else %}{% url 'academic_year_list' %}{% endif %}">Cancel</a>
-</form>
+        .container {
+            max-width: 500px;
+            margin: 60px auto;
+            background-color: #fff;
+            padding: 30px 35px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 {
+            color: #c82333;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        strong {
+            font-weight: bold;
+            color: #444;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button[type="submit"] {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #bd2130;
+        }
+
+        a.cancel-link {
+            display: inline-block;
+            text-decoration: none;
+            color: #6c757d;
+            background-color: #e2e6ea;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        a.cancel-link:hover {
+            background-color: #d6d8db;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Are you sure you want to delete this {{ type }}?</h2>
+    <p><strong>{{ object }}</strong></p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, Delete</button>
+        <a class="cancel-link" href="{% if type == 'Class' %}{% url 'class_list' %}{% else %}{% url 'academic_year_list' %}{% endif %}">Cancel</a>
+    </form>
+</div>
+
+</body>
+</html>

@@ -1,16 +1,145 @@
-<a href="{% url 'home'%}"><button>Home</button></a>
-<a href="{% url 'admission_home'%}"><button>Back</button></a>
-<br>
-<a href="{% url 'download_excel_template' %}">⬇️ Download Excel Template</a>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <label>Select Excel File:</label>
-    <input type="file" name="student_file" required>
-    <button type="submit">Import Students</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Import Students</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
 
-<ul>
-    {% for message in messages %}
-        <li>{{ message }}</li>
-    {% endfor %}
-</ul>
+        .container {
+            max-width: 700px;
+            background-color: #fff;
+            margin: 30px auto;
+            padding: 25px 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-buttons {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        .top-buttons a button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            margin-left: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .download-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .download-link a {
+            text-decoration: none;
+            background-color: #28a745;
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .download-link a:hover {
+            background-color: #218838;
+        }
+
+        form {
+            text-align: center;
+            font-size: 14px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input[type="file"] {
+            padding: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 80%;
+            font-size: 13px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            margin-top: 20px;
+            padding-left: 20px;
+            color: green;
+        }
+
+        ul li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="top-buttons">
+        <a href="{% url 'home' %}"><button type="button">Home</button></a>
+        <a href="{% url 'admission_home' %}"><button type="button">Back</button></a>
+    </div>
+
+    <h2>Import Students via Excel</h2>
+
+    <div class="download-link">
+        <a href="{% url 'download_excel_template' %}">⬇️ Download Excel Template</a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="student_file">Select Excel File:</label>
+        <input type="file" name="student_file" id="student_file" required>
+        <br>
+        <button type="submit">Import Students</button>
+    </form>
+
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

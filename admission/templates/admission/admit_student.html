@@ -1,18 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Student Admission</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f2f4f7;
+            margin: 0;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .container {
+            max-width: 1200px;
+            background: #fff;
+            margin: 10px auto;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 6px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .top-buttons {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .top-buttons a button {
+            padding: 5px 12px;
+            font-size: 12px;
+            margin: 0 4px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .form-group {
+            flex: 1 1 22%; /* Roughly 4 columns */
+            min-width: 180px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="email"],
+        input[type="number"],
+        input[type="file"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 4px 6px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            height: 40px;          /* 👈 reduce height */
+            resize: vertical;      /* 👈 optional: allow user to expand only vertically */
+            line-height: 1.2;
+        }
+
+
+        small {
+            color: red;
+            font-size: 10px;
+        }
+
+        .submit-btn {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .submit-btn button {
+            padding: 6px 20px;
+            font-size: 13px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submit-btn button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 900px) {
+            .form-group {
+                flex: 1 1 45%; /* 2 columns for tablet */
+            }
+        }
+
+        @media (max-width: 600px) {
+            .form-group {
+                flex: 1 1 100%; /* Stack on mobile */
+            }
+        }
+    </style>
 </head>
 <body>
-    <a href="{% url 'home'%}"><button>Home</button></a>
-    <a href="{% url 'admission_home'%}"><button>Back</button></a>
+
+<div class="container">
+    <div class="top-buttons">
+        <a href="{% url 'home' %}"><button type="button">Home</button></a>
+        <a href="{% url 'admission_home' %}"><button type="button">Back</button></a>
+    </div>
+
     <h2>Student Admission Form</h2>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit</button>
+        <div class="form-grid">
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <small>{{ field.errors.0 }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="submit-btn">
+            <button type="submit">Submit</button>
+        </div>
     </form>
+</div>
 
 </body>
 </html>
