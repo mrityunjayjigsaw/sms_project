@@ -1,16 +1,129 @@
 <!DOCTYPE html>
-<html>
-<head><title>Welcome to SMS</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to School Management System</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/public_home.css' %}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #004080;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        nav {
+            background-color: #0066cc;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .features {
+            margin-top: 20px;
+            padding-left: 20px;
+        }
+
+        .features li {
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .actions a {
+            display: inline-block;
+            margin: 10px 15px;
+            padding: 12px 20px;
+            background-color: #004080;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .actions a:hover {
+            background-color: #003366;
+        }
+
+        .message {
+            text-align: center;
+            color: green;
+            margin: 20px 0;
+        }
+    </style>
+</head>
 <body>
-    {% if messages %}
-        {% for message in messages %}
-          <p style="color: green;">{{ message }}</p>
-        {% endfor %}
-    {% endif %}
-    <h1>Welcome to Our School Management Web App</h1>
-    <p>Features: Admission, Fees, Transactions, Reports, and more!</p>
-    <a href="{% url 'school_signup' %}">Sign Up Your School</a> |
+
+<header>
+    <h1>Welcome to Our School Management System</h1>
+    <p>Streamline your school administration with ease</p>
+</header>
+
+<nav>
+    <a href="{% url 'school_signup' %}">Sign Up</a>
     <a href="{% url 'login' %}">Login</a>
-    <a href="admin/">Admin Dashboard(Only For Admin)</a>
+    <a href="/admin/">Admin Dashboard</a>
+</nav>
+
+{% if messages %}
+    <div class="message">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="container">
+    <h2>Why Choose Our Platform?</h2>
+    <ul class="features">
+        <li>📋 Student Admissions with Digital Forms</li>
+        <li>💰 Fee Posting & Online Payment Tracking</li>
+        <li>📈 Real-time Reports: Ledgers, Dues, Receipts</li>
+        <li>💼 Full Accounting Integration</li>
+        <li>🧾 Automated PDF Receipts & Export Options</li>
+        <li>🔐 Role-Based Access for School Admins</li>
+    </ul>
+
+    <div class="actions">
+        <a href="{% url 'school_signup' %}">📝 Register Your School</a>
+        <a href="{% url 'login' %}">🔐 Login Now</a>
+        <a href="/admin/">⚙️ Admin Dashboard</a>
+    </div>
+</div>
+
 </body>
 </html>

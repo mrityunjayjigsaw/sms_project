@@ -1,30 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>School Management System - Home</title>
+    <meta charset="UTF-8">
+    <title>Dashboard - School Management System</title>
+    {% load static %}
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #004080;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .message-box {
+            margin: 20px auto;
+            max-width: 800px;
+            padding: 10px 20px;
+            background-color: #e8fbe8;
+            color: green;
+            border: 1px solid #a6d8a8;
+            border-radius: 5px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #004080;
+        }
+
+        .module-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .module-list li {
+            margin: 15px 0;
+            font-size: 18px;
+        }
+
+        .module-list a {
+            color: #004080;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .module-list a:hover {
+            text-decoration: underline;
+        }
+
+        .logout-btn {
+            display: inline-block;
+            margin-top: 30px;
+            background-color: #c62828;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .logout-btn:hover {
+            background-color: #a00000;
+        }
+
+        .top-right {
+            text-align: right;
+            margin: 10px 20px 0 0;
+        }
+    </style>
 </head>
 <body>
-    {% if messages %}
-    <ul>
-      {% for message in messages %}
-        <li style="color:green">{{ message }}</li>
-      {% endfor %}
+
+<header>
+    <h1>School Management System</h1>
+</header>
+
+{% if messages %}
+    <div class="message-box">
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<div class="container">
+    <h2>Welcome, {{ request.user.username }}</h2>
+    <p style="text-align: center;">Select a module to continue:</p>
+
+    <ul class="module-list">
+        <li>📘 <a href="{% url 'admission_home' %}">Admission Module</a></li>
+        <li>💸 <a href="{% url 'fees_home' %}">Fees Module</a></li>
+        <li>📊 <a href="{% url 'transactions_home' %}">Transactions Module</a></li>
+        <li>🧾 <a href="{% url 'reports_home' %}">Reports Module</a></li>
     </ul>
-    {% endif %}
 
-    <h1>Welcome {{ request.user.username }}</h1>
+    <div style="text-align: center;">
+        <a class="logout-btn" href="/logout/">Logout</a>
+    </div>
+</div>
 
-    <p>Select a module:</p>
-
-    <ul>
-        {% comment %} <li><a href="/admin">🎓 Admin</a></li> {% endcomment %}
-        <li><a href="{% url 'admission_home' %}">📘 Admission</a></li>
-        <li><a href="{% url 'fees_home'%}">💸 Fees </a></li>
-        <li><a href="{% url 'transactions_home'%}">📊 Transactions </a></li>
-        <li><a href="{% url 'reports_home' %}">📊 Reports Module</a></li>
-
-    </ul>
-
-    <p><a href="/logout/">Logout</a></p>
 </body>
 </html>
