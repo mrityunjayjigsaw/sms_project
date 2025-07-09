@@ -2,10 +2,27 @@
 <html>
 <head>
     <title>Class-wise Current Dues</title>
+    <style>
+        @media print {
+            .no-print {
+                display: none;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid black;
+                padding: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <a href="{% url 'home' %}"><button>Home</button></a>
-    <a href="{% url 'fees_home' %}"><button>Back</button></a>
+
+<div class="no-print">
+    <a href="{% url 'home' %}"><button>🏠 Home</button></a>
+    <a href="{% url 'fees_home' %}"><button>↩️ Back</button></a>
 
     <h2>📊 Class-wise Students’ Current Total Dues</h2>
 
@@ -27,29 +44,35 @@
             {% endfor %}
         </select>
 
-        <button type="submit">Show Current Dues</button>
+        <button type="submit">🔍 Show Current Dues</button>
     </form>
 
     {% if students_data %}
-        <h3>Current Dues for {{ selected_class.name }} - {{ selected_year.name }}</h3>
-        <table border="1" cellpadding="5">
-            <tr>
-                <th>Student Name</th>
-                <th>Father's Name</th>
-                <th>Section</th>
-                <th>Status</th>
-            </tr>
-            {% for entry in students_data %}
-                <tr>
-                    <td>{{ entry.student.full_name }}</td>
-                    <td>{{ entry.father_name }}</td>
-                    <td>{{ entry.section }}</td>
-                    <td>{{ entry.status }}</td>
-                </tr>
-            {% endfor %}
-        </table>
-    {% elif selected_class and selected_year %}
-        <p>No data found for selected class and year.</p>
+        <button onclick="window.print()">🖨️ Print</button>
     {% endif %}
+</div>
+
+{% if students_data %}
+    <h3>Current Dues for {{ selected_class.name }} - {{ selected_year.name }}</h3>
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Student Name</th>
+            <th>Father's Name</th>
+            <th>Section</th>
+            <th>Status</th>
+        </tr>
+        {% for entry in students_data %}
+            <tr>
+                <td>{{ entry.student.full_name }}</td>
+                <td>{{ entry.father_name }}</td>
+                <td>{{ entry.section }}</td>
+                <td>{{ entry.status }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% elif selected_class and selected_year %}
+    <p>No data found for selected class and year.</p>
+{% endif %}
+
 </body>
 </html>

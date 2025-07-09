@@ -790,6 +790,89 @@ def student_ledger(request, student_id):
 # This view handles the student ledger, showing all dues and payments in a single timeline.
 
 
+import openpyxl
+from openpyxl.styles import Font
+from django.http import HttpResponse
+
+from operator import itemgetter
+from decimal import Decimal
+from datetime import date
+from django.utils.dateparse import parse_date
+from django.shortcuts import get_object_or_404
+
+from .models import StudentAdmission, StudentFeeDue, StudentFeePayment, StudentAdvanceBalance
+
+
+def export_student_ledger_excel(request, student_id):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+
+    from_date = parse_date(request.GET.get('from_date')) or date(2024, 1, 1)
+    to_date = parse_date(request.GET.get('to_date')) or date.today()
+
+    dues = StudentFeeDue.objects.filter(student=student, month__range=(from_date, to_date)).order_by('month')
+    payments = StudentFeePayment.objects.filter(student=student, payment_date__range=(from_date, to_date)).order_by('payment_date')
+
+    ledger_entries = []
+
+    for due in dues:
+        ledger_entries.append({
+            'date': due.month,
+            'type': 'Posted',
+            'description': f"{due.fee_type.name} Fee Posted",
+            'amount': Decimal(due.original_due),
+            'direction': 'debit'
+        })
+
+    for pay in payments:
+        ledger_entries.append({
+            'date': pay.payment_date,
+            'type': 'Paid',
+            'description': f"Payment ({pay.payment_mode})",
+            'amount': Decimal(pay.total_amount),
+            'direction': 'credit'
+        })
+
+    ledger_entries.sort(key=itemgetter('date'))
+
+    balance = Decimal('0.00')
+    for entry in ledger_entries:
+        if entry['direction'] == 'debit':
+            balance += entry['amount']
+        else:
+            balance -= entry['amount']
+        entry['balance'] = balance
+
+    # Create workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"{student.full_name} Ledger"
+
+    # Header row
+    headers = ["Date", "Type", "Description", "Debit (₹)", "Credit (₹)", "Running Balance (₹)"]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    # Data rows
+    for entry in ledger_entries:
+        row = [
+            entry['date'].strftime("%d-%b-%Y"),
+            entry['type'],
+            entry['description'],
+            entry['amount'] if entry['direction'] == 'debit' else "",
+            entry['amount'] if entry['direction'] == 'credit' else "",
+            entry['balance']
+        ]
+        ws.append(row)
+
+    # Response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    filename = f"{student.full_name.replace(' ', '_')}_ledger.xlsx"
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    wb.save(response)
+    return response
 
 
 

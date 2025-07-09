@@ -17,4 +17,6 @@ urlpatterns = [
     path('classwise-total-dues/', classwise_total_dues, name='classwise_total_dues'),
     path('student-ledger/list/', list_students_for_ledger, name='student_ledger_list'),
     path('student-ledger/<int:student_id>/', student_ledger, name='student_ledger'),  # Next step
+    path('student-ledger/<int:student_id>/export/', export_student_ledger_excel, name='export_student_ledger'),
+
 ]

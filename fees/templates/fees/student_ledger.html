@@ -40,6 +40,9 @@
 
         <button type="submit">🔄 Refresh</button>
     </form>
+    <a href="{% url 'export_student_ledger' student.id %}?from_date={{ from_date|date:'Y-m-d' }}&to_date={{ to_date|date:'Y-m-d' }}">
+    <button type="button">📤 Export to Excel</button>
+    </a>
 
     {% if ledger_entries %}
         <table>
