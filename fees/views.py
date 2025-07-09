@@ -444,26 +444,33 @@ def collect_fee_step2(request, student_id, payment_date):
     fee_types = FeeType.objects.all()
     dues = StudentFeeDue.objects.filter(student=student, is_posted=True).order_by('month')
     advance_obj, _ = StudentAdvanceBalance.objects.get_or_create(student=student)
+#     ✅ Tries to get an existing StudentAdvanceBalance object for the given student.
+#     ❌ If it doesn't exist, it creates a new one with default values.
     advance_amount = advance_obj.advance_amount
     total_due = dues.aggregate(total=Sum('amount_due'))['total'] or Decimal('0.00')
+    
+#       This is a Django ORM aggregate query, which means:
+#       It computes a single value, not a queryset.
+#       In this case, it returns a dictionary like: {'total': <sum of all amount_due fields in dues>}
+
 
     if request.method == 'POST' and 'allocate' in request.POST:
-        amount_paid = Decimal(request.POST.get('amount_paid', '0'))
-        payment_mode = request.POST.get('payment_mode', 'CASH')
-        remaining = amount_paid + advance_amount
-        allocated = []
+        amount_paid = Decimal(request.POST.get('amount_paid', '0')) # Default to 0 if not specified
+        payment_mode = request.POST.get('payment_mode', 'CASH') # Default to CASH if not specified
+        remaining = amount_paid + advance_amount # Total amount available for allocation
+        allocated = []  # List to store allocated amounts for each due
 
-        for due in dues:
-            if remaining <= 0:
+        for due in dues:# Iterate through each due
+            if remaining <= 0:# If no remaining amount, break the loop
                 break
-            alloc = min(remaining, due.amount_due)
-            if alloc > 0:
+            alloc = min(remaining, due.amount_due)# Allocate the minimum of remaining amount or due amount
+            if alloc > 0:# If allocation is greater than 0, update the due
                 allocated.append({
                     'month': due.month,
                     'fee_type': due.fee_type,
                     'amount': alloc
-                })
-            remaining -= Decimal(alloc)
+                })# Append the allocation to the list
+            remaining -= Decimal(alloc)# Update remaining amount after allocation
 
         return render(request, 'fees/collect_fee_step2.html', {
             'student': student,
@@ -491,7 +498,8 @@ def collect_fee_step2(request, student_id, payment_date):
                 payment_mode=payment_mode,
                 remarks=f"Fees collected for {payment_date_obj.strftime('%B %Y')}"
             )
-
+# StudentFeePayment holds the amount paid, payment date, mode, and remarks.
+# StudentFeePaymentDetail holds the details of each fee type paid and in this amount is equal to allocated amount not the original paid amount.
             for due in dues:
                 if remaining <= 0:
                     break
@@ -522,7 +530,7 @@ def collect_fee_step2(request, student_id, payment_date):
 
                 remaining -= Decimal(alloc)
 
-            advance_obj.advance_amount = remaining
+            advance_obj.advance_amount = remaining# This updates the advance amount after allocation
             advance_obj.save()
 
         return render(request, 'fees/collection_success.html', {
@@ -587,6 +595,203 @@ def download_receipt(request, payment_id):
     if pisa_status.err:
         return HttpResponse('We had errors rendering PDF', status=500)
     return response
+
+
+
+
+def classwise_total_dues(request):
+    selected_class = None
+    selected_year = None
+    students_data = []
+
+    if request.method == 'POST':
+        selected_class_id = request.POST.get('class_id')
+        selected_year_id = request.POST.get('year_id')
+
+        if selected_class_id and selected_year_id:
+            selected_class = Class.objects.get(id=selected_class_id)
+            selected_year = AcademicYear.objects.get(id=selected_year_id)
+
+            academic_records = StudentAcademicRecord.objects.filter(
+                class_enrolled=selected_class,
+                academic_year=selected_year,
+                student__is_active=True
+            ).select_related('student')
+
+            for record in academic_records:
+                student = record.student
+
+                # 1. Total fees posted (all time)
+                total_original_due = StudentFeeDue.objects.filter(
+                    student=student
+                ).aggregate(total=Sum('original_due'))['total'] or 0
+
+                # 2. Total payments received (all time)
+                total_paid = StudentFeePaymentDetail.objects.filter(
+                    payment__student=student
+                ).aggregate(total=Sum('amount_paid'))['total'] or 0
+
+                # 3. Advance balance (from model)
+                try:
+                    advance_balance = StudentAdvanceBalance.objects.get(student=student).advance_amount
+                except StudentAdvanceBalance.DoesNotExist:
+                    advance_balance = 0
+
+                # 4. Net due = posted - paid - advance
+                net_due = total_original_due - total_paid - advance_balance
+
+                if net_due < 0:
+                    status = f"Advance ₹{abs(net_due)}"
+                    net_due = 0
+                elif net_due == 0:
+                    status = "No Dues"
+                else:
+                    status = f"Due ₹{net_due}"
+
+                students_data.append({
+                    'student': student,
+                    'father_name': student.father_name,
+                    'section': record.section,
+                    'total_due': net_due,
+                    'status': status,
+                })
+
+    context = {
+        'classes': Class.objects.all(),
+        'years': AcademicYear.objects.all(),
+        'selected_class': selected_class,
+        'selected_year': selected_year,
+        'students_data': students_data,
+    }
+
+    return render(request, 'fees/classwise_total_dues.html', context)
+
+
+# views.py
+
+from django.shortcuts import render
+from admission.models import Class, AcademicYear, StudentAcademicRecord
+from django.utils.timezone import now
+
+def list_students_for_ledger(request):
+    selected_class = None
+    selected_year = None
+    students_data = []
+
+    if request.method == 'POST':
+        class_id = request.POST.get('class_id')
+        year_id = request.POST.get('year_id')
+
+        if class_id and year_id:
+            selected_class = Class.objects.get(id=class_id)
+            selected_year = AcademicYear.objects.get(id=year_id)
+
+            records = StudentAcademicRecord.objects.filter(
+                class_enrolled=selected_class,
+                academic_year=selected_year,
+                student__is_active=True
+            ).select_related('student')
+
+            for record in records:
+                students_data.append({
+                    'student': record.student,
+                    'section': record.section,
+                    'father_name': record.student.father_name,
+                    'record_id': record.id
+                })
+
+    context = {
+        'classes': Class.objects.all(),
+        'years': AcademicYear.objects.all(),
+        'selected_class': selected_class,
+        'selected_year': selected_year,
+        'students_data': students_data,
+        'today': now().date()
+    }
+    return render(request, 'fees/student_list_for_ledger.html', context)
+
+from django.shortcuts import render, get_object_or_404
+from django.utils.dateparse import parse_date
+from datetime import date
+from decimal import Decimal
+from operator import itemgetter
+
+from .models import StudentAdmission, StudentFeeDue, StudentFeePayment
+
+def student_ledger(request, student_id):
+    student = get_object_or_404(StudentAdmission, id=student_id)
+
+    # Parse date range from GET or use defaults
+    from_date = parse_date(request.GET.get('from_date')) or date(2024, 1, 1)
+    to_date = parse_date(request.GET.get('to_date')) or date.today()
+
+    # 1. Get dues posted within the date range
+    dues = StudentFeeDue.objects.filter(
+        student=student,
+        month__gte=from_date,
+        month__lte=to_date
+    ).order_by('month')
+
+    # 2. Get actual payments (total paid by student, not just allocated)
+    payments = StudentFeePayment.objects.filter(
+        student=student,
+        payment_date__gte=from_date,
+        payment_date__lte=to_date
+    ).order_by('payment_date')
+
+    # 3. Prepare ledger entries (both dues and payments)
+    ledger_entries = []
+
+    for due in dues:
+        ledger_entries.append({
+            'date': due.month,
+            'type': 'Fee Posted',
+            'description': f"{due.fee_type.name} Fee Posted",
+            'amount': due.original_due,
+            'direction': 'debit'
+        })
+
+    for pay in payments:
+        ledger_entries.append({
+            'date': pay.payment_date,
+            'type': 'Payment Received',
+            'description': f"Payment Received ({pay.payment_mode})",
+            'amount': pay.total_amount,
+            'direction': 'credit'
+        })
+
+    # 4. Sort entries by date
+    ledger_entries.sort(key=itemgetter('date'))
+
+    # 5. Compute running balance and detect advance
+    balance = Decimal('0.00')
+    for entry in ledger_entries:
+        if entry['direction'] == 'debit':
+            balance += Decimal(entry['amount'])
+        else:
+            balance -= Decimal(entry['amount'])
+
+        entry['balance'] = balance
+
+        # Show advance line if balance becomes negative
+        if entry['balance'] < 0:
+            entry['advance_note'] = f"Advance ₹{abs(entry['balance'])}"
+        else:
+            entry['advance_note'] = ""
+
+    context = {
+        'student': student,
+        'ledger_entries': ledger_entries,
+        'from_date': from_date,
+        'to_date': to_date,
+    }
+
+    return render(request, 'fees/student_ledger.html', context)
+# This view handles the student ledger, showing all dues and payments in a single timeline.
+
+
+
+
 
 
 

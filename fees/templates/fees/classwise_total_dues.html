@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Class-wise Current Dues</title>
+</head>
+<body>
+    <a href="{% url 'home' %}"><button>Home</button></a>
+    <a href="{% url 'fees_home' %}"><button>Back</button></a>
+
+    <h2>📊 Class-wise Students’ Current Total Dues</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <label>Select Academic Year:</label>
+        <select name="year_id" required>
+            <option value="">--Select--</option>
+            {% for y in years %}
+                <option value="{{ y.id }}" {% if selected_year and y.id == selected_year.id %}selected{% endif %}>{{ y.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Select Class:</label>
+        <select name="class_id" required>
+            <option value="">--Select--</option>
+            {% for c in classes %}
+                <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Show Current Dues</button>
+    </form>
+
+    {% if students_data %}
+        <h3>Current Dues for {{ selected_class.name }} - {{ selected_year.name }}</h3>
+        <table border="1" cellpadding="5">
+            <tr>
+                <th>Student Name</th>
+                <th>Father's Name</th>
+                <th>Section</th>
+                <th>Status</th>
+            </tr>
+            {% for entry in students_data %}
+                <tr>
+                    <td>{{ entry.student.full_name }}</td>
+                    <td>{{ entry.father_name }}</td>
+                    <td>{{ entry.section }}</td>
+                    <td>{{ entry.status }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% elif selected_class and selected_year %}
+        <p>No data found for selected class and year.</p>
+    {% endif %}
+</body>
+</html>

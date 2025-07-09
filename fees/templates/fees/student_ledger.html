@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Ledger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 6px 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .advance-note {
+            color: green;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="{% url 'student_ledger_list' %}"><button>🔙 Back to List</button></a>
+    <h2>📒 Ledger for {{ student.full_name }}</h2>
+
+    <form method="get">
+        <label>From:</label>
+        <input type="date" name="from_date" value="{{ from_date|default:'2024-01-01'|date:'Y-m-d' }}" required>
+
+
+        <label>To:</label>
+        <input type="date" name="to_date" value="{{ to_date|date:'Y-m-d' }}" required>
+
+        <button type="submit">🔄 Refresh</button>
+    </form>
+
+    {% if ledger_entries %}
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Debit (₹)</th>
+                <th>Credit (₹)</th>
+                <th>Running Balance (₹)</th>
+            </tr>
+            {% for entry in ledger_entries %}
+                <tr>
+                    <td>{{ entry.date|date:"d M Y" }}</td>
+                    <td>{{ entry.type }}</td>
+                    <td>
+                        {{ entry.description }}
+                        {% if entry.advance_note %}
+                            <div class="advance-note">{{ entry.advance_note }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{% if entry.direction == 'debit' %}{{ entry.amount }}{% endif %}</td>
+                    <td>{% if entry.direction == 'credit' %}{{ entry.amount }}{% endif %}</td>
+                    <td>{{ entry.balance }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No ledger entries in the selected period.</p>
+    {% endif %}
+
+</body>
+</html>

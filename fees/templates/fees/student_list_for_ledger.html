@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Ledger Access</title>
+</head>
+<body>
+    <a href="{% url 'home' %}"><button>Home</button></a>
+    <a href="{% url 'fees_home' %}"><button>Back</button></a>
+    
+    <h2>📋 Select Class & Year to View Student Ledgers</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <label>Academic Year:</label>
+        <select name="year_id" required>
+            <option value="">--Select--</option>
+            {% for y in years %}
+                <option value="{{ y.id }}" {% if selected_year and y.id == selected_year.id %}selected{% endif %}>{{ y.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Class:</label>
+        <select name="class_id" required>
+            <option value="">--Select--</option>
+            {% for c in classes %}
+                <option value="{{ c.id }}" {% if selected_class and c.id == selected_class.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">🔍 Show Students</button>
+    </form>
+
+    {% if students_data %}
+        <h3>Students in {{ selected_class }} ({{ selected_year.name }})</h3>
+        <table border="1" cellpadding="5">
+            <tr>
+                <th>Name</th>
+                <th>Father's Name</th>
+                <th>Section</th>
+                <th>Ledger</th>
+            </tr>
+            {% for entry in students_data %}
+                <tr>
+                    <td>{{ entry.student.full_name }}</td>
+                    <td>{{ entry.father_name }}</td>
+                    <td>{{ entry.section }}</td>
+                    <td>
+                        <form action="{% url 'student_ledger' entry.student.id %}" method="get" style="margin:0;">
+                            <input type="hidden" name="from_date" value="2024-01-01">
+                            <input type="hidden" name="to_date" value="{{ today }}">
+                            <button type="submit">📄 View Ledger</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% elif selected_class and selected_year %}
+        <p>No students found.</p>
+    {% endif %}
+</body>
+</html>

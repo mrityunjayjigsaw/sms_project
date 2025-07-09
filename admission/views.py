@@ -82,7 +82,7 @@ def student_list(request):
     school = request.user.userprofile.school
     if request.user.is_superuser:
         students = StudentAdmission.objects.filter(is_active=True)
-        print("Found students:", students) 
+        # print("Found students:", students) 
     else:
         students = StudentAdmission.objects.filter(
         school=school,
