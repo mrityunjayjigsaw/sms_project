@@ -14,6 +14,7 @@ class AccountHeadAdmin(admin.ModelAdmin):
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['date', 'debit_account', 'credit_account', 'amount', 'school']
+    list_display = ['date', 'debit_account', 'credit_account', 'amount', 'school', 'voucher_type', 'created_by', 'transaction_id']
     list_filter = ['date', 'debit_account', 'credit_account']
+    readonly_fields = ['transaction_id', 'created_at']
     search_fields = ['remarks']

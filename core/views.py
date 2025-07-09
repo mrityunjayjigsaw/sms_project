@@ -34,6 +34,7 @@ def school_signup(request):
                         # Create the school
                         school = School.objects.create(
                             name=form.cleaned_data['name'],
+                            short_name=form.cleaned_data['short_name'],
                             address=form.cleaned_data['address'],
                             contact=form.cleaned_data['contact']
                         )

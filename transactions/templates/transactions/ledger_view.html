@@ -40,6 +40,7 @@
         <h3>Ledger for: {{ selected_account.name }} (Opening: ₹{{ selected_account.opening_balance }})</h3>
         <table border="1" cellpadding="5" cellspacing="0">
             <tr>
+                <th>Transaction ID</th>
                 <th>Date</th>
                 <th>Voucher Type</th>
                 <th>Opposite Account</th>
@@ -50,6 +51,7 @@
             </tr>
             {% for entry in ledger_entries %}
             <tr>
+                <td>{{ entry.transaction_id }}</td>
                 <td>{{ entry.date }}</td>
                 <td>{{ entry.voucher_type }}</td>
                 <td>{{ entry.opposite_account }}</td>

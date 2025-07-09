@@ -23,6 +23,18 @@
         <button type="submit">Submit Transaction</button>
     </form>
 
+    {% if transaction %}
+        <hr>
+        <p><strong>✅ Transaction Recorded</strong></p>
+        <p><strong>Transaction ID:</strong> {{ transaction.transaction_id }}</p>
+        <p><strong>Date:</strong> {{ transaction.date }}</p>
+        <p><strong>Amount:</strong> ₹{{ transaction.amount }}</p>
+        <p><strong>Dr:</strong> {{ transaction.debit_account.name }} → <strong>Cr:</strong> {{ transaction.credit_account.name }}</p>
+        <p><strong>Voucher Type:</strong> {{ transaction.get_voucher_type_display }}</p>
+        <p><strong>Remarks:</strong> {{ transaction.remarks }}</p>
+    {% endif %}
+
+    <br>
     <a href="{% url 'home' %}">← Back to Home</a>
 </body>
 </html>

@@ -22,9 +22,9 @@ def transactions_home(request):
 
 @login_required
 def add_manual_transaction(request):
-     # adjust import if needed
-
     user_school = request.user.userprofile.school
+    transaction = None  # Will store created transaction
+
     form = ManualTransactionForm(request.POST or None)
     form.fields['debit_account'].queryset = form.fields['debit_account'].queryset.filter(school=user_school)
     form.fields['credit_account'].queryset = form.fields['credit_account'].queryset.filter(school=user_school)
@@ -34,22 +34,25 @@ def add_manual_transaction(request):
 
         if cd['debit_account'] == cd['credit_account']:
             messages.error(request, "Debit and Credit accounts cannot be the same.")
-            return render(request, 'transactions/add_manual_transaction.html', {'form': form})
+        else:
+            transaction = Transaction.objects.create(
+                date=cd['date'],
+                debit_account=cd['debit_account'],
+                credit_account=cd['credit_account'],
+                amount=cd['amount'],
+                remarks=cd['remarks'],
+                voucher_type=cd['voucher_type'],
+                school=user_school,
+                created_by=request.user
+            )
+            messages.success(request, f"Transaction recorded successfully (Txn ID: {transaction.transaction_id})")
+            form = ManualTransactionForm()  # Clear form after success
 
-        Transaction.objects.create(
-            date=cd['date'],
-            debit_account=cd['debit_account'],
-            credit_account=cd['credit_account'],
-            amount=cd['amount'],
-            remarks=cd['remarks'],
-            voucher_type=cd['voucher_type'],
-            school=user_school,
-            created_by=request.user
-        )
-        messages.success(request, "Transaction recorded successfully.")
-        return redirect('add_manual_transaction')
+    return render(request, 'transactions/add_manual_transaction.html', {
+        'form': form,
+        'transaction': transaction,  # Pass to template
+    })
 
-    return render(request, 'transactions/add_manual_transaction.html', {'form': form})
 
 @login_required
 def view_transactions(request):
@@ -106,7 +109,7 @@ def export_transactions_excel(request):
         )
     if voucher_type:
         transactions = transactions.filter(voucher_type=voucher_type)
-        
+
     parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
     if parsed_start:
         transactions = transactions.filter(date__gte=parsed_start)
@@ -115,18 +118,18 @@ def export_transactions_excel(request):
     if parsed_end:
         transactions = transactions.filter(date__lte=parsed_end)
 
-
-    # Create workbook
+    # Create Excel workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Transactions"
 
-    # Header
-    ws.append(['Date', 'Debit Account', 'Credit Account', 'Amount', 'Voucher Type', 'Remarks'])
+    # ✅ Header Row
+    ws.append(['Transaction ID', 'Date', 'Debit Account', 'Credit Account', 'Amount', 'Voucher Type', 'Remarks'])
 
-    # Data rows
+    # ✅ Data Rows
     for txn in transactions:
         ws.append([
+            txn.transaction_id,
             txn.date.strftime('%Y-%m-%d'),
             txn.debit_account.name,
             txn.credit_account.name,
@@ -135,13 +138,14 @@ def export_transactions_excel(request):
             txn.remarks or ''
         ])
 
-    # Set response
+    # ✅ Excel File Response
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
     response['Content-Disposition'] = 'attachment; filename="transactions.xlsx"'
     wb.save(response)
     return response
+
 
 @login_required
 def ledger_view(request):
@@ -157,7 +161,6 @@ def ledger_view(request):
     running_balance = Decimal('0.00')
     parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
     parsed_end = parse_date(end_date) if isinstance(end_date, str) and end_date else None
-
 
     if selected_account_id and selected_account_id.isdigit():
         selected_account = get_object_or_404(AccountHead, id=selected_account_id, school=user_school)
@@ -187,6 +190,7 @@ def ledger_view(request):
                 running_balance -= txn.amount
 
             ledger_entries.append({
+                'transaction_id': txn.transaction_id,  # ✅ Include transaction ID
                 'date': txn.date,
                 'debit': debit,
                 'credit': credit,
@@ -203,6 +207,7 @@ def ledger_view(request):
         'start_date': start_date,
         'end_date': end_date
     })
+
 
 @login_required
 def export_ledger_excel(request):
@@ -234,8 +239,9 @@ def export_ledger_excel(request):
     ws = wb.active
     ws.title = "Ledger"
 
+    # ✅ Header with Transaction ID
     ws.append([
-        'Date', 'Voucher Type', 'Opposite Account',
+        'Transaction ID', 'Date', 'Voucher Type', 'Opposite Account',
         'Debit (₹)', 'Credit (₹)', 'Running Balance (₹)', 'Remarks'
     ])
 
@@ -254,6 +260,7 @@ def export_ledger_excel(request):
             opposite = txn.debit_account.name
 
         ws.append([
+            txn.transaction_id,
             txn.date.strftime('%Y-%m-%d'),
             txn.get_voucher_type_display(),
             opposite,
@@ -277,6 +284,7 @@ def export_ledger_excel(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
+
 
 
 @login_required

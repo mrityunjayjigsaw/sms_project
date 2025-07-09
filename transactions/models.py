@@ -42,6 +42,17 @@ class Transaction(models.Model):
     voucher_type = models.CharField(max_length=20, choices=VOUCHER_TYPES, blank=True, null=True)  # ✅ Add this
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)    
     created_at = models.DateTimeField(auto_now_add=True)
+    transaction_id = models.CharField(max_length=30, editable=False) 
+
 
     def __str__(self):
         return f"{self.date} | Dr: {self.debit_account.name} Cr: {self.credit_account.name} ₹{self.amount}"
+    
+    class Meta:
+        unique_together = ('school', 'transaction_id')  # ✅ Enforce per-school uniqueness
+
+# transactions/models.py
+
+class SchoolTransactionCounter(models.Model):
+    school = models.OneToOneField(School, on_delete=models.CASCADE)
+    last_number = models.PositiveIntegerField(default=0)

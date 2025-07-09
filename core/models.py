@@ -3,9 +3,11 @@ from django.contrib.auth.models import User
 
 class School(models.Model):
     name = models.CharField(max_length=255)
+    short_name = models.CharField(max_length=10, unique=True, null=True)  # e.g., "KWS"
     address = models.TextField(blank=True, null=True)
     contact = models.CharField(max_length=20, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    
 
     def __str__(self):
         return self.name

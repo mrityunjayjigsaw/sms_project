@@ -46,6 +46,7 @@
     {% if transactions %}
         <table border="1" cellpadding="6" cellspacing="0">
             <tr>
+                <th>Txn No</th>
                 <th>Date</th>
                 <th>Debit Account</th>
                 <th>Credit Account</th>
@@ -57,6 +58,7 @@
             </tr>
             {% for txn in transactions %}
                 <tr>
+                    <td>{{ txn.transaction_id }}</td>
                     <td>{{ txn.date }}</td>
                     <td>{{ txn.debit_account.name }}</td>
                     <td>{{ txn.credit_account.name }}</td>
