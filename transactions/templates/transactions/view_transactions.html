@@ -9,6 +9,10 @@
     <h2>All Transactions</h2>
 
     <form method="get">
+        <label for="txn_id">Transaction No:</label>
+        <input type="text" name="txn_id" id="txn_id" placeholder="e.g. KWS-TXN000123" value="{{ txn_id|default:'' }}">
+
+
         <label for="account">Account:</label>
         <select name="account" id="account">
             <option value="">All</option>

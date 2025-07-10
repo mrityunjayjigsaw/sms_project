@@ -64,6 +64,10 @@ def view_transactions(request):
     voucher_type = request.GET.get('voucher_type')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
+    txn_id = request.GET.get('txn_id')
+
+    if txn_id:
+        transactions = transactions.filter(transaction_id__icontains=txn_id)
 
     if account_id and account_id.isdigit():
         transactions = transactions.filter(
@@ -71,6 +75,7 @@ def view_transactions(request):
         )
     if voucher_type:
         transactions = transactions.filter(voucher_type=voucher_type)
+
     parsed_start = parse_date(start_date) if isinstance(start_date, str) and start_date else None
     if parsed_start:
         transactions = transactions.filter(date__gte=parsed_start)
@@ -78,7 +83,6 @@ def view_transactions(request):
     parsed_end = parse_date(end_date) if isinstance(end_date, str) and end_date else None
     if parsed_end:
         transactions = transactions.filter(date__lte=parsed_end)
-
 
     accounts = AccountHead.objects.filter(school=user_school)
 
@@ -89,7 +93,9 @@ def view_transactions(request):
         'account_filter': account_id,
         'start_date': start_date,
         'end_date': end_date,
+        'txn_id': txn_id,  # pass to template
     })
+
 
 
 @login_required
