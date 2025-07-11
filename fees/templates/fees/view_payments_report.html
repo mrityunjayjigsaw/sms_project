@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payments Report</title>
+</head>
+<body>
+    <a href="{% url 'home' %}"><button>Home</button></a>
+    <a href="{% url 'fees_home' %}"><button>Back</button></a>
+
+    <h2>💰 View Fee Payments Report</h2>
+
+    <form method="get">
+        <label>Academic Year:</label>
+        <select name="year_id" required>
+            <option value="">--Select--</option>
+            {% for y in years %}
+                <option value="{{ y.id }}" {% if selected_year_id == y.id|stringformat:"s" %}selected{% endif %}>{{ y.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Class:</label>
+        <select name="class_id" required>
+            <option value="">--Select--</option>
+            {% for c in classes %}
+                <option value="{{ c.id }}" {% if selected_class_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">🔍 Filter</button>
+    </form>
+
+    {% if payments %}
+    <h3>Results ({{ payments.count }} payments):</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+    <tr>
+        <th>Payment Date</th>
+        <th>Created At</th>
+        <th>Student</th>
+        <th>Class</th>
+        <th>Total Amount (₹)</th>
+        <th>Mode</th>
+        <th>Remarks</th>
+        <th>Action</th>  <!-- New column -->
+    </tr>
+    {% for pay in payments %}
+    <tr>
+        <td>{{ pay.payment_date }}</td>
+        <td>{{ pay.date }}</td>
+        <td>{{ pay.student.full_name }}</td>
+        <td>
+            {% for record in pay.student.academic_records.all %}
+                {% if record.academic_year.id|stringformat:"s" == selected_year_id and record.class_enrolled.id|stringformat:"s" == selected_class_id %}
+                    {{ record.class_enrolled.name }}
+                {% endif %}
+            {% endfor %}
+        </td>
+        <td>{{ pay.total_amount }}</td>
+        <td>{{ pay.get_payment_mode_display }}</td>
+        <td>{{ pay.remarks }}</td>
+
+        <td>
+            {% if pay.is_active %}
+                <a href="{% url 'cancel_payment' pay.id %}" onclick="return confirm('Are you sure you want to cancel this payment?');">
+                    <button style="background-color:red;color:white;">❌ Cancel</button>
+                </a>
+            {% else %}
+                <span style="color:gray;">Cancelled</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+    {% elif selected_year_id and selected_class_id %}
+        <p>No payments found for selected year and class.</p>
+    {% endif %}
+</body>
+</html>

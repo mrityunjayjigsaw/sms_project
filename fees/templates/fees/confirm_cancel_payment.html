@@ -1,0 +1,11 @@
+<h2>⚠ Confirm Cancel Payment</h2>
+<p>Are you sure you want to cancel this payment of ₹{{ payment.total_amount }}?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <label>Password:</label>
+    <input type="password" name="password" required>
+    <br><br>
+    <button type="submit" style="background-color:red;color:white;">Confirm Cancel</button>
+    <a href="{% url 'view_payments_report' %}"><button type="button">Cancel</button></a>
+</form>

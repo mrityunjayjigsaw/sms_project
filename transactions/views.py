@@ -57,7 +57,7 @@ def add_manual_transaction(request):
 @login_required
 def view_transactions(request):
     user_school = request.user.userprofile.school
-    transactions = Transaction.objects.filter(school=user_school).order_by('-date')
+    transactions = Transaction.objects.filter(school=user_school, is_active = True).order_by('-date')
 
     # Filters
     account_id = request.GET.get('account')
@@ -101,7 +101,7 @@ def view_transactions(request):
 @login_required
 def export_transactions_excel(request):
     user_school = request.user.userprofile.school
-    transactions = Transaction.objects.filter(school=user_school).order_by('-date')
+    transactions = Transaction.objects.filter(school=user_school, is_active = True).order_by('-date')
 
     # Apply filters (same as in view_transactions)
     account_id = request.GET.get('account')
@@ -173,7 +173,8 @@ def ledger_view(request):
 
         transactions = Transaction.objects.filter(
             Q(debit_account=selected_account) | Q(credit_account=selected_account),
-            school=user_school
+            school=user_school,
+            is_active = True
         ).order_by('date', 'id')
 
         if parsed_start:
@@ -232,7 +233,8 @@ def export_ledger_excel(request):
 
     transactions = Transaction.objects.filter(
         Q(debit_account=account) | Q(credit_account=account),
-        school=user_school
+        school=user_school,
+        is_active = True
     ).order_by('date', 'id')
 
     if parsed_start:
@@ -344,6 +346,30 @@ def list_account_heads(request):
     school = request.user.userprofile.school
     heads = AccountHead.objects.filter(school=school).order_by('type', 'name')
     return render(request, 'transactions/account_head_list.html', {'heads': heads})
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from datetime import datetime
+from .models import Transaction
+
+@login_required
+def delete_transaction(request, txn_id):
+    txn = get_object_or_404(Transaction, id=txn_id)
+
+    # Check permission: Only delete journal transactions that are not fee related
+    if txn.voucher_type != 'journal' or txn.remarks.startswith('Posted fee') or txn.remarks.startswith('Received fee'):
+        messages.error(request, "⚠️ You cannot delete fee-related or non-manual transactions.")
+        return redirect('view_transactions')
+
+    if request.method == 'POST':
+        txn.is_active = False
+        txn.deleted_by = request.user
+        txn.deleted_at = datetime.now()
+        txn.save()
+        messages.success(request, f"✅ Transaction {txn.transaction_id} has been deleted.")
+        return redirect('view_transactions')
 
 # transactions/views.py
 # import pandas as pd

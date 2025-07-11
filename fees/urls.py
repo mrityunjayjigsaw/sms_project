@@ -18,5 +18,8 @@ urlpatterns = [
     path('student-ledger/list/', list_students_for_ledger, name='student_ledger_list'),
     path('student-ledger/<int:student_id>/', student_ledger, name='student_ledger'),  # Next step
     path('student-ledger/<int:student_id>/export/', export_student_ledger_excel, name='export_student_ledger'),
+    path('payments/report/', view_payments_report, name='view_payments_report'),
+    path('cancel-payment/<int:payment_id>/', cancel_payment, name='cancel_payment'),
+
 
 ]

@@ -11,6 +11,7 @@ from django.db import transaction
 from django.db.models import Q, Sum
 from datetime import datetime,date, timedelta
 from decimal import Decimal
+from django.contrib import messages
 
 
 def fees_home(request):
@@ -187,6 +188,58 @@ def assign_fees_bulk(request):
                             created_at=datetime.now()    
                         )
         return redirect('fees_home')
+    
+    elif request.method == 'POST' and 'undo_posting' in request.POST:
+        with transaction.atomic():
+            # Get selected month, class, year
+            month_str = request.POST.get('month')
+            try:
+                month_date = date.fromisoformat(month_str + "-01")
+            except (TypeError, ValueError):
+                messages.error(request, "Invalid month.")
+                return redirect('assign_fees_bulk')
+
+            year_id = request.POST.get('academic_year')
+            class_id = request.POST.get('class_enrolled')
+            school = request.user.userprofile.school
+
+            # Get all students
+            student_records = StudentAcademicRecord.objects.filter(
+                academic_year_id=year_id,
+                class_enrolled_id=class_id,
+                school=school
+            ).select_related('student')
+
+            students = [r.student for r in student_records]
+
+            # Undo StudentFeeDue
+            dues = StudentFeeDue.objects.filter(
+                student__in=students,
+                month=month_date,
+                is_posted=True
+            )
+            dues.update(is_posted=False)
+
+            # Undo Transactions by pattern match
+            for student in students:
+                for fee_type in FeeType.objects.all():
+                    expected_remark = f"Posted fee for {student.full_name} - {fee_type.name} - {month_date.strftime('%B %Y')}"
+                    Transaction.objects.filter(
+                        school=school,
+                        date=month_date,
+                        remarks=expected_remark,
+                        debit_account__name="STUDENT_DUES",
+                        credit_account=fee_type.account_head,
+                        is_active=True
+                    ).update(
+                        is_active=False,
+                        deleted_by=request.user,
+                        deleted_at=datetime.now()
+                    )
+
+            messages.success(request, "✅ Fee Posting successfully undone.")
+            return redirect('assign_fees_bulk')
+
 
     return render(request, 'fees/assign_fees_bulk.html', {
         'form': form,
@@ -623,7 +676,8 @@ def classwise_total_dues(request):
 
                 # 1. Total fees posted (all time)
                 total_original_due = StudentFeeDue.objects.filter(
-                    student=student
+                    student=student,
+                    is_posted=True
                 ).aggregate(total=Sum('original_due'))['total'] or 0
 
                 # 2. Total payments received (all time)
@@ -729,7 +783,8 @@ def student_ledger(request, student_id):
     dues = StudentFeeDue.objects.filter(
         student=student,
         month__gte=from_date,
-        month__lte=to_date
+        month__lte=to_date,
+        is_posted = True
     ).order_by('month')
 
     # 2. Get actual payments (total paid by student, not just allocated)
@@ -874,7 +929,95 @@ def export_student_ledger_excel(request, student_id):
     wb.save(response)
     return response
 
+from django.shortcuts import render
+from .models import StudentFeePayment
+from admission.models import AcademicYear, Class, StudentAcademicRecord
 
+def view_payments_report(request):
+    selected_year_id = request.GET.get('year_id')
+    selected_class_id = request.GET.get('class_id')
+    records = []
+    payments = []
+
+    if selected_year_id and selected_class_id:
+        records = StudentAcademicRecord.objects.filter(
+            academic_year_id=selected_year_id,
+            class_enrolled_id=selected_class_id
+        ).select_related('student')
+
+        student_ids = [rec.student.id for rec in records]
+
+        payments = StudentFeePayment.objects.filter(
+            student_id__in=student_ids,
+            is_active=True
+        ).select_related('student').order_by('-payment_date')
+
+    return render(request, 'fees/view_payments_report.html', {
+        'years': AcademicYear.objects.all(),
+        'classes': Class.objects.all(),
+        'selected_year_id': selected_year_id,
+        'selected_class_id': selected_class_id,
+        'payments': payments,
+    })
+
+from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now
+
+@login_required
+def cancel_payment(request, payment_id):
+    payment = get_object_or_404(StudentFeePayment, id=payment_id, is_active=True)
+
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        user = authenticate(username=request.user.username, password=password)
+
+        if not user:
+            messages.error(request, "❌ Incorrect password. Payment not cancelled.")
+            return redirect('view_payments_report')
+
+        with transaction.atomic():
+            # 1. Reverse dues
+            for detail in payment.details.all():
+                StudentFeeDue.objects.filter(
+                    student=payment.student,
+                    fee_type=detail.fee_type,
+                    month__lte=payment.payment_date,
+                    is_posted=True
+                ).order_by('-month').first().amount_due += detail.amount_paid
+                StudentFeeDue.objects.filter(
+                    student=payment.student,
+                    fee_type=detail.fee_type,
+                    month__lte=payment.payment_date,
+                    is_posted=True
+                ).order_by('-month').first().save()
+
+            # 2. Delete payment details
+            payment.details.all().delete()
+
+            # 3. Soft delete payment
+            payment.is_active = False
+            payment.deleted_by = request.user
+            payment.deleted_at = now()
+            payment.save()
+
+            # 4. Soft delete transactions using remark pattern
+            for detail in payment.details.all():
+                expected_remark = f"{payment.student.full_name} - {detail.fee_type.name} ({payment.payment_date.strftime('%B %Y')})"
+                Transaction.objects.filter(
+                    school=payment.student.school,
+                    remarks=expected_remark,
+                    is_active=True
+                ).update(
+                    is_active=False,
+                    deleted_by=request.user,
+                    deleted_at=now()
+                )
+
+        messages.success(request, "✅ Payment cancelled successfully.")
+        return redirect('view_payments_report')
+
+    return render(request, 'fees/confirm_cancel_payment.html', {'payment': payment})
 
 
 

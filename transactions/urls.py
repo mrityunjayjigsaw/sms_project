@@ -16,6 +16,8 @@ urlpatterns = [
     path('opening-balances/', views.set_opening_balances, name='set_opening_balances'),
     path('create_account_head/', views.create_account_head, name='create_account_head'),
     path('list_account_heads/', views.list_account_heads, name='list_account_heads'),
+    path('delete/<int:txn_id>/', views.delete_transaction, name='delete_transaction'),
+
 
 
 

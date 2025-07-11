@@ -1,8 +1,21 @@
 {% load get_dict %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Post Monthly Fee Dues (Bulk)</title>
+</head>
+<body>
+
 <a href="{% url 'home'%}"><button>Home</button></a>
 <a href="{% url 'fees_home'%}"><button>Back</button></a>
 <h2>Post Monthly Fee Dues (Bulk)</h2>
+{% if messages %}
+    {% for message in messages %}
+        <p style="color:green;">{{ message }}</p>
+    {% endfor %}
+{% endif %}
 
+<!-- 🔍 Filter Form -->
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
@@ -10,52 +23,84 @@
 </form>
 
 {% if students %}
-<form method="post">
-    {% csrf_token %}
+    <!-- ✅ Fee Posting Form -->
+    <form method="post">
+        {% csrf_token %}
+        {% if already_posted %}
+        <p style="color: red;">
+            <strong>⚠ Fees for this month have already been posted for at least one student.
+            Editing will update existing records.</strong>
+        </p>
+        {% endif %}
+
+        <p style="color: darkblue;">
+            ℹ️ The amounts below are pre-filled from the previous month (if available), or from the assigned fee plan.
+            You can override them before clicking <strong>Post Fees</strong>.
+        </p>
+
+        <!-- Hidden context info -->
+        <input type="hidden" name="post_fees" value="1">
+        <input type="hidden" name="month" value="{{ selected_month|date:'Y-m' }}">
+        <input type="hidden" name="academic_year" value="{{ selected_year_id }}">
+        <input type="hidden" name="class_enrolled" value="{{ selected_class_id }}">
+
+        <!-- 💳 Fee Table -->
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Student Name</th>
+                    {% for fee_type in fee_types %}
+                        <th>{{ fee_type.name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><input type="checkbox" name="student_ids" value="{{ student.student.id }}" checked></td>
+                    <td>{{ student.student.full_name }}</td>
+                    {% for fee_type in fee_types %}
+                    <td>
+                        <input type="number" step="0.01"
+                               name="amount_{{ student.student.id }}_{{ fee_type.id }}"
+                               value="{{ student.student.previous_fee_keys|get_item:fee_type.id }}"
+                               placeholder="₹">
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- ✅ Post Button -->
+        <button type="submit">✅ Post Fees</button>
+    </form>
+
+    <!-- ❌ Undo Form -->
     {% if already_posted %}
-    <p style="color: red;"><strong>⚠ Fees for this month have already been posted for at least one student. Editing will update existing records.</strong></p>
-    {% endif %}
-
-    <p style="color: darkblue;">
-        ℹ️ The amounts below are pre-filled from the previous month (if available), or from the assigned fee plan.
-        You can override them before clicking <strong>Post Fees</strong>.
-    </p>
-
-    <input type="hidden" name="post_fees" value="1">
+<form method="post" style="margin-top: 15px;" onsubmit="return confirmUndo()">
+    {% csrf_token %}
+    <input type="hidden" name="undo_posting" value="1">
     <input type="hidden" name="month" value="{{ selected_month|date:'Y-m' }}">
     <input type="hidden" name="academic_year" value="{{ selected_year_id }}">
     <input type="hidden" name="class_enrolled" value="{{ selected_class_id }}">
-
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Select</th>
-                <th>Student Name</th>
-                {% for fee_type in fee_types %}
-                    <th>{{ fee_type.name }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students %}
-            <tr>
-                <td><input type="checkbox" name="student_ids" value="{{ student.student.id }}" checked></td>
-                <td>{{ student.student.full_name }}</td>
-                {% for fee_type in fee_types %}
-                <td>
-                    <input type="number" step="0.01"
-                           name="amount_{{ student.student.id }}_{{ fee_type.id }}"
-                           value="{{ student.student.previous_fee_keys|get_item:fee_type.id }}"
-                           placeholder="₹">
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <button type="submit">Post Fees</button>
+    <button type="submit" style="background-color: red; color: white;">
+        ❌ Undo Fee Posting
+    </button>
 </form>
+
+<script>
+function confirmUndo() {
+    return confirm("⚠ Are you sure you want to undo fee posting for this month? This will disable all related transactions.");
+}
+</script>
 {% endif %}
 
+{% endif %}
 
+<br>
 <a href="{% url 'fees_home' %}">⬅ Back to Fees Home</a>
+
+</body>
+</html>

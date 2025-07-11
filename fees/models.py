@@ -1,7 +1,10 @@
 from django.db import models
 from transactions.models import AccountHead  # Importing the AccountHead model
 from admission.models import StudentAdmission
+from django.contrib.auth import get_user_model
+
 # Create your models here.
+User = get_user_model()
  
 class FeeType(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -70,6 +73,9 @@ class StudentFeePayment(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES, default='CASH')  # ✅
     remarks = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    deleted_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='cancelled_payments')
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.student.full_name} - ₹{self.total_amount} - {self.payment_date.strftime('%d %b %Y')}"
